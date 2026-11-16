@@ -128,23 +128,23 @@ mit zusätzlichem Umfang ist zugleich ein **Nachtrag (Change Request)**: Zustimm
   eingeteilten Personen (Person mit passender Rolle am Vorgang).
 - **Abrechnungsart pro Teilprojekt**: *nach Aufwand* (Standard) oder *Festpreis* (siehe unten).
 
-### Festpreis – was das bedeuten könnte (Vorschlag)
+### Festpreis
 
-Da die App keine Euro kennt, wirkt sich Festpreis nur auf die Tage und die Kundensicht aus:
+Grundsatz: **Die Kalkulation ist transparent.** Der Kunde sieht bei Festpreis dieselben Tage wie bei
+Abrechnung nach Aufwand – Plan, und je nach Projekteinstellung auch Ist und Prognose. Festpreis ändert nur:
 
 1. **Budget wird festgeschrieben**: Beim Markieren als Festpreis (bzw. beim Annehmen der Version, in der das
    passiert) werden die Slimstock-Tage des Teilprojekts als vereinbartes Budget gespeichert. Spätere
    Planänderungen ändern dieses Budget nicht – nur ein angenommener Entwurf, der ausdrücklich als **Nachtrag**
    gekennzeichnet ist.
 2. **Mehraufwand ist Slimstock-Risiko**: Prognose über Budget erscheint intern rot.
-3. **Kundensicht**: Bei Festpreis sieht der Kunde nur Fortschritt, Termine und seine eigenen Kunden-Tage –
-   keine Slimstock-Ist-Tage und keine Prognose.
+3. **Ist-Tage weniger prominent**: In der Kundensicht stehen bei Festpreis-Teilprojekten Budget, Plan und
+   Fortschritt im Vordergrund; Ist und Prognose sind sichtbar, aber zurückgenommen (eingeklappt bzw. in der
+   Detailzeile, ohne Ampel und ohne Rot).
 4. **Umfangsänderung**: Kommen in einem Entwurf Vorgänge in einem Festpreis-Teilprojekt dazu, fragt die App
    beim Annehmen: „Nachtrag (Budget erhöhen) oder im Festpreis (Budget bleibt)?“
 
-Bei *nach Aufwand* folgt das Budget immer der Arbeitsversion, und der Kunde kann Ist und Prognose sehen
-(je nach Projekteinstellung). Datenmodell und Oberfläche sehen die Abrechnungsart vor; die Regeln oben
-setzen wir um, wenn du sie bestätigt hast.
+Bei *nach Aufwand* folgt das Budget immer der Arbeitsversion.
 
 ### Ist und Prognose
 
@@ -167,8 +167,9 @@ setzen wir um, wenn du sie bestätigt hast.
 
 ### Was der Kunde sieht
 
-Pro Projekt einstellbar: *nichts* · *nur Kunden-Tage* · *alle Tage (Plan)* · *alle Tage mit Ist und
-Prognose*. Für Festpreis-Teilprojekte gilt höchstens „alle Tage (Plan)“.
+Pro Projekt einstellbar: *nichts* · *nur Kunden-Tage* · *alle Tage (Plan)* (Standard) · *alle Tage mit Ist
+und Prognose*. Die Einstellung gilt für Festpreis und Aufwand gleichermaßen; bei Festpreis sind Ist und
+Prognose nur weniger prominent dargestellt.
 
 ## 4. Projektdesign aus Vorlagen (später – jetzt nur angedacht)
 
@@ -455,7 +456,7 @@ für jede Version.
 | **1 – Gerüst** | Repo, Docker + Postgres, Healthcheck, Versionierung, Mehrsprachigkeit (de/en) von Anfang an, Login mit Benutzername/Passwort, Benutzerverwaltung, Projektrollen (erweiterbar), Projekte + Teilprojekte, Beteiligte mit Rollen und Berechtigungen |
 | **2 – Plan** | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
 | **3 – Entwürfe** | Entwürfe anlegen/bearbeiten/verwerfen, Vergleich (Gantt + Tabelle), Annehmen mit Übernahme der Ist-Daten, Historie |
-| **4 – Kalkulation** | Tage pro Vorgang und Projektrolle, Summen, Vergleich Δ Tage, Ist-Buchungen von Hand, Rest/Prognose, Abrechnungsart (Festpreis-Regeln nach Bestätigung), Excel-Export |
+| **4 – Kalkulation** | Tage pro Vorgang und Projektrolle, Summen, Vergleich Δ Tage, Ist-Buchungen von Hand, Rest/Prognose, Abrechnungsart mit Festpreis-Budget, Excel-Export |
 | **5 – Kunden** | Persönliche Links pro Projekt, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |
 | **6 – Taskliste** | Tasks mit Tabelle/Kanban, Verknüpfung zum Plan, „Meine Aufgaben“ |
 | **7 – Feinschliff** | Änderungsprotokoll, Mail-Benachrichtigungen (neuer Entwurf zur Abstimmung, Task zugewiesen) |
@@ -484,15 +485,13 @@ Stufen 1–7 sind der POC auf garageband.
 - Meeting-Protokolle und Flash-Report nach dem POC.
 - Kalkulation nur in Tagen pro Projektrolle und Projektschritt, keine Euro; Ist-Tage von Hand.
 - Projektrollen Slimstock und Kunde wie in Abschnitt 7, erweiterbar, mehrere Rollen pro Person.
-- Festpreis ist eine Option pro Teilprojekt; die Regeln dazu sind noch Vorschlag.
+- Festpreis ist eine Option pro Teilprojekt; die Kalkulation bleibt transparent, der Kunde sieht dieselben
+  Tage wie bei Aufwand, Ist-Tage nur weniger prominent.
+- Berechtigungen aus Projektrollen wie in Abschnitt 7.
+- Kundensicht auf die Kalkulation: Standard „alle Tage (Plan)“.
 - Mehrsprachig: Deutsch und Englisch zum Start, Projektsprache je Projekt, spontan umschaltbar.
 
 ## 13. Offene Fragen
 
-1. **Festpreis**: Passen die vier Regeln in Abschnitt 3 (Budget festschreiben, Mehraufwand intern rot,
-   eingeschränkte Kundensicht, Nachfrage „Nachtrag oder im Festpreis?“)?
-2. **Berechtigungen aus Rollen**: Passt die Zuordnung in Abschnitt 7 – insbesondere Sponsor (Kunde) als
-   Projektleitung Kunde (darf also Entwürfen zustimmen) und User nur als Leser?
-3. **Kundensicht auf die Kalkulation**: Welche der vier Stufen soll Standard sein? Vorschlag: „alle Tage
-   (Plan)“.
-4. **Vorlagen**: kommen Ende der Woche von dir.
+1. **Vorlagen**: kommen Ende der Woche von dir.
+2. **Subdomain**: offen, wird per `PUBLIC_URL` gesetzt.
