@@ -11,14 +11,14 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 5.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> **Stand: Proof of Concept, Stufe 6.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
 > Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt), Entwürfe
-> mit Vergleich und Historie, die Aufwandskalkulation und der Kundenzugang per persönlichem Link mit
-> Abstimmung und Kommentaren sind da. Die Taskliste folgt – siehe [PLAN.md](PLAN.md).
+> mit Vergleich und Historie, die Aufwandskalkulation, der Kundenzugang per persönlichem Link mit
+> Abstimmung und Kommentaren sowie die Aufgabenliste sind da – siehe [PLAN.md](PLAN.md).
 
-| Projektplan | Entwurf im Vergleich | Kalkulation | Kundensicht |
-| --- | --- | --- | --- |
-| ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Kalkulation mit Plan, Ist, Rest und Prognose je Seite und dem Budget je Teilprojekt](docs/screenshots/kalkulation.png) | ![Der Kunde sieht den freigegebenen Plan, stimmt einem Entwurf zu und kommentiert einen Vorgang](docs/screenshots/kundensicht.png) |
+| Projektplan | Entwurf im Vergleich | Kalkulation | Aufgaben | Kundensicht |
+| --- | --- | --- | --- | --- |
+| ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Kalkulation mit Plan, Ist, Rest und Prognose je Seite und dem Budget je Teilprojekt](docs/screenshots/kalkulation.png) | ![Aufgaben als Kanban mit Status-Spalten, Fälligkeit, Bereich und Personen](docs/screenshots/aufgaben.png) | ![Der Kunde sieht den freigegebenen Plan, stimmt einem Entwurf zu und kommentiert einen Vorgang](docs/screenshots/kundensicht.png) |
 
 ## Was Slimstock Projektmanagement für dich macht
 
@@ -48,6 +48,10 @@ Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 - **Excel-Export** – Plan und Aufwand, Budget und Buchungen als Excel-Datei in der Projektsprache.
 - **Stand im Blick** – Fortschritt, Ist-Start und Ist-Ende je Vorgang; Phasen, Teilprojekte und das
   ganze Projekt rechnen ihren Stand daraus.
+- **Offene Punkte an einem Ort** – die Aufgabenliste für alles, was zwischendurch anfällt: „Kunde
+  liefert Artikelstammdaten“, „Testzugang einrichten“. Mit Status, Fälligkeit, Priorität, Bereich,
+  Personen auf beiden Seiten, Links und Kommentaren – als Tabelle oder Kanban, auf Wunsch mit einem
+  Vorgang im Plan verknüpft. **Meine Aufgaben** zeigt jedem, was er über alle Projekte hinweg zu tun hat.
 - **Wer macht was** – jede Person bekommt eine oder mehrere Projektrollen: Projektleiter, Solution
   Architect, Consultant … bei Slimstock, Projektleiter, Key User, IT-Interface … beim Kunden. Die
   Rollenliste pflegst du selbst.
@@ -178,14 +182,30 @@ nimmt eine weitere dazu.
 - **Excel-Export** oben rechts: Plan und Aufwand, Budget und Buchungen – genau das, was du in der App
   sehen darfst.
 
-### 8. Beteiligte eintragen
+### 8. Aufgaben verteilen
+
+Im Projekt unter **Aufgaben**: Titel eintippen, **+ Aufgabe** – rechts öffnen sich die Details mit
+Status, Fälligkeit, Priorität, Bereich, Teilprojekt, Beschreibung, Personen, Links und Kommentaren. Eine
+Aufgabe kann auf einen **Vorgang im Plan** zeigen; der Vorgang listet dann „Aufgaben dazu“.
+
+- **Tabelle** gruppiert nach Fälligkeit (überfällig, heute, nächste 7 Tage, später, ohne Datum), Status,
+  Person oder Teilprojekt. Der Haken vorne erledigt eine Aufgabe.
+- **Kanban**: eine Spalte je Status plus „Erledigt“. Karten ziehen ändert den Status oder die
+  Reihenfolge.
+- **Status bearbeiten** (Projektleitung): eigene Status je Projekt, z. B. „Beim Kunden“, „In Test“.
+- **Intern** markierte Aufgaben und interne Kommentare sieht der Kunde nicht.
+- Der Kunde arbeitet mit: Seine Projektleitung legt Aufgaben an und bearbeitet alle (nicht internen),
+  Key User & Co. die eigenen und die ihnen zugeordneten. Leser schauen nur zu.
+- **Meine Aufgaben** oben in der Leiste: alles Offene, das dir zugeordnet ist, über alle Projekte.
+
+### 9. Beteiligte eintragen
 
 Im Projekt unter **Beteiligte**: Slimstock-Kollegen aus der Liste wählen, Personen beim Kunden mit
 Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sich aus den Rollen; nur
 wenn es im Einzelfall anders sein soll, stellst du sie direkt ein. Über die E-Mail erkennt die App
 dieselbe Kundenperson in mehreren Projekten wieder.
 
-### 9. Den Kunden einladen
+### 10. Den Kunden einladen
 
 Bei jeder Person auf Kundenseite gibt es den Knopf **🔗 Link**: Er zeigt den persönlichen Link für
 dieses Projekt zum **Kopieren**, **Teilen** oder **per E-Mail senden** (öffnet dein Mailprogramm mit
@@ -214,7 +234,7 @@ bleibt, wie es ist.
 - Die App verschickt selbst keine Mails – den Link teilst du per Kopieren, Teilen oder über dein
   Mailprogramm.
 - Wer den Link hat, ist drin – wie bei einem geteilten Dokument. Gib ihn nur der Person selbst.
-- Die Taskliste kommt in der nächsten Stufe.
+- Aufgaben haben noch keine Dateianhänge und keine Erinnerungs-Mails; Links auf Dateiablagen gehen.
 - Keine Preise und keine Euro – bewusst. Ist-Zeiten kommen noch nicht aus einer Zeiterfassung.
 - Änderungen, die in der Arbeitsversion gemacht wurden, während ein Entwurf entstand, lassen sich beim
   Annehmen noch nicht einzeln übernehmen – die App zeigt sie nur an.

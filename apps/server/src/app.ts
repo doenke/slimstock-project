@@ -14,6 +14,7 @@ import { versionRoutes } from './api/versions.js';
 import { effortRoutes } from './api/effort.js';
 import { exportRoutes } from './api/export.js';
 import { linkRoutes } from './api/links.js';
+import { taskRoutes } from './api/tasks.js';
 import { projectRoutes } from './api/projects.js';
 import { SessionStore, type SessionUser } from './auth/sessions.js';
 import type { Config } from './config.js';
@@ -86,6 +87,7 @@ export async function buildApp({ config, db }: { config: Config; db: Db }) {
   await app.register(effortRoutes, { db });
   await app.register(exportRoutes, { db });
   await app.register(linkRoutes, { db, config, sessions });
+  await app.register(taskRoutes, { db });
 
   app.all('/api/*', async () => {
     throw new ApiError(404, 'not_found');

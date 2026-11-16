@@ -1,4 +1,5 @@
 import type { Billing, EffortEntry, EffortRow, UnitBudget } from './effort.js';
+import type { Task, TaskComment, TaskStatus } from './tasks.js';
 import type { PlanDiff, PlanItem, PlanSettings, PlanSubproject, RowPlan } from './plan.js';
 import type { Language, LocalizedText } from './languages.js';
 import type { PermissionLevel, Rights, Side } from './permissions.js';
@@ -138,6 +139,8 @@ export interface PlanPayload {
   rights: { edit: boolean; editSettings: boolean; createDraft: boolean; manageVersions: boolean; review: boolean; comment: boolean };
   /** Comments on this version and its tasks (internal ones only for Slimstock). */
   comments: PlanComment[];
+  /** Tasks from the task list linked to plan tasks (by key). */
+  linkedTasks: { id: string; title: string; done: boolean; planItemKey: string; projectId: string }[];
   /** Effort estimation as far as the user may see it (null: nothing). */
   effort: PlanEffort | null;
   /** With ?compare=<version>: the other version's dates per row and what changed (from it to this one). */
@@ -195,4 +198,26 @@ export interface AcceptPreview {
   fixedPrice: { unitId: string; budget: number | null; plan: number }[];
   /** What the draft changes compared to the current working version. */
   diff: PlanDiff;
+}
+
+/** The task list of a project (and its subprojects) as far as the user may see it. */
+export interface TaskList {
+  rootId: string;
+  statuses: TaskStatus[];
+  tasks: Task[];
+  comments: TaskComment[];
+  people: PlanPerson[];
+  /** Projects tasks can belong to (the root and its subprojects the user sees). */
+  projects: { id: string; name: string; parentId: string | null }[];
+  /** Plan tasks of the working version to link to (only Slimstock sees internal ones). */
+  planItems: { key: string; title: string }[];
+  rights: { create: boolean; editAll: boolean; internal: boolean; editStatuses: boolean; comment: boolean };
+}
+
+/** "My tasks": open tasks assigned to me in all my projects. */
+export interface MyTask extends Task {
+  projectName: string;
+  rootId: string;
+  rootName: string;
+  statusLabel: string | null;
 }

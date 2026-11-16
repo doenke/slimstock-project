@@ -14,6 +14,7 @@ import { formatDate } from '../format';
 import { Link, navigate, useLocation } from '../router';
 import { useSession } from '../session';
 import { PlanView } from '../plan/PlanView';
+import { TasksView } from '../tasks/TasksView';
 import { daysText } from '../plan/text';
 import { MembersPanel } from './MembersPanel';
 import { ProjectFields } from './ProjectsPage';
@@ -22,7 +23,7 @@ export function ProjectPage({ id }: { id: string }) {
   const { t } = useTranslation();
   const { query } = useLocation();
   const tabParam = query.get('tab');
-  const tab = tabParam === 'members' || tabParam === 'plan' ? tabParam : 'overview';
+  const tab = tabParam === 'members' || tabParam === 'plan' || tabParam === 'tasks' ? tabParam : 'overview';
   const { setProjectLanguage } = useSession();
   const { data: project, error, reload } = useLoad(() => get<ProjectDetail>(`/api/projects/${id}`), [id]);
   const [editing, setEditing] = useState(false);
@@ -76,6 +77,7 @@ export function ProjectPage({ id }: { id: string }) {
       <div className="tabs">
         {tabLink('overview', t('project.overview'))}
         {tabLink('plan', t('project.plan'))}
+        {tabLink('tasks', t('tasks.tab'))}
         {tabLink('members', t('project.members'))}
       </div>
 
@@ -123,6 +125,8 @@ export function ProjectPage({ id }: { id: string }) {
         </div>
       ) : tab === 'plan' ? (
         <PlanView projectId={p.id} rootId={p.path[0]?.id ?? p.id} />
+      ) : tab === 'tasks' ? (
+        <TasksView projectId={p.id} rootId={p.path[0]?.id ?? p.id} />
       ) : (
         <MembersPanel project={p} />
       )}

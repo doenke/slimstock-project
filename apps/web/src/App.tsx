@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ProjectPage } from './pages/ProjectPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { MyTasksPage } from './tasks/MyTasksPage';
 import { match, useLocation } from './router';
 import { useSession } from './session';
 
@@ -24,6 +25,7 @@ export function App() {
   if (path === '/' || path === '') page = <ProjectsPage />;
   else if ((params = match('/projects/:id', path))) page = <ProjectPage key={params.id} id={params.id!} />;
   else if (path === '/profile') page = <ProfilePage />;
+  else if (path === '/tasks') page = <MyTasksPage />;
   else if (me.isAdmin && path === '/admin/users') page = <UsersPage />;
   else if (me.isAdmin && path === '/admin/roles') page = <RolesPage />;
   else if (me.isAdmin && path === '/admin/customers') page = <CustomersPage />;

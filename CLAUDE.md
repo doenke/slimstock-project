@@ -1,7 +1,7 @@
 # Slimstock Projektmanagement – Hinweise für Claude
 
 Browser-App (PWA) zum Führen von Slimstock-Kundenprojekten, geteilt mit dem Kunden. Fachlicher Plan und
-alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–5 fertig.
+alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–6 fertig.
 
 ## Aufbau
 
@@ -19,12 +19,14 @@ pnpm-Monorepo, TypeScript durchgehend.
   `effort_entries`, Rollups, Budget je Abrechnungseinheit = Teilprojekt bzw. Projektebene; Festpreis-Budget
   in `plan_versions.terms`). Alles in Minuten (1 Tag = 480), angezeigt in Tagen. Kunden: sehen nur Versionen
   mit `customerVisible` (Zur Abstimmung geben setzt es, Zurückholen nimmt es weg und macht Reviews `stale`),
-  nie interne Vorgänge/Kommentare; Kalkulation je Projekteinstellung `effortView`.
+  nie interne Vorgänge/Kommentare; Kalkulation je Projekteinstellung `effortView`. Aufgaben: `tasks.ts`
+  (Status je Projekt in `projects.settings.taskStatuses`, Fälligkeitsgruppen), Tabelle `tasks` am Projekt
+  oder Teilprojekt mit `root_id`, optional `plan_item_key`; Rechte je Aufgabe in `api/tasks.ts` (`taskRights`).
 - `apps/server` – Fastify 5, Drizzle + PostgreSQL. `src/app.ts` (Hooks, Healthcheck, statische Web-App),
   `src/api/*` (auth, admin, projects, plan, versions = Entwürfe/Annehmen, effort = Buchungen/Abrechnung,
-  export = Excel über exceljs, links = persönliche Kunden-Links unter `/k/<token>`, access = Rechteberechnung), `src/i18n.ts` (Texte für Server-Ausgaben), `src/auth/*` (Argon2id, Sessions,
+  export = Excel über exceljs, links = persönliche Kunden-Links unter `/k/<token>`, tasks = Aufgabenliste und „Meine Aufgaben“, access = Rechteberechnung), `src/i18n.ts` (Texte für Server-Ausgaben), `src/auth/*` (Argon2id, Sessions,
   Login-Bremse), `src/db/schema.ts` + Migrationen in `drizzle/` (`pnpm db:generate`, nie von Hand ändern).
-- `apps/web` – React 19 + Vite, eigener Mini-Router (`router.tsx`), i18next, Plan unter `src/plan/*`, Service Worker `src/sw.ts`
+- `apps/web` – React 19 + Vite, eigener Mini-Router (`router.tsx`), i18next, Plan unter `src/plan/*`, Aufgaben unter `src/tasks/*`, Service Worker `src/sw.ts`
   (Netz zuerst, API/Healthz nie gecacht), Styles in `src/styles.css` (Slimstock-Farben als Variablen).
 
 ## Regeln

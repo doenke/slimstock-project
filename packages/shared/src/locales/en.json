@@ -8,7 +8,8 @@
     "admin": "Administration",
     "account": "Account",
     "profile": "Profile and password",
-    "logout": "Log out"
+    "logout": "Log out",
+    "myTasks": "My tasks"
   },
   "language": {
     "label": "Language",
@@ -61,7 +62,9 @@
     "status_not_allowed": "Not possible in the version's current state.",
     "unknown_version": "This version does not exist.",
     "link_only_for_customers": "Links are for customer people only – Slimstock logs in with user name and password.",
-    "reason_required": "Please give a reason when rejecting."
+    "reason_required": "Please give a reason when rejecting.",
+    "unknown_status": "This status does not exist.",
+    "invalid_url": "Please enter an address starting with http:// or https://."
   },
   "permission": {
     "reader": "Reader",
@@ -493,5 +496,68 @@
     "approve": "Approve",
     "reject": "Reject",
     "noApproval": "The customer has not approved this draft (yet). You can accept it anyway."
+  },
+  "tasks": {
+    "tab": "Tasks",
+    "title": "Task",
+    "done": "Done",
+    "statusLabel": "Status",
+    "due": "Due",
+    "priority": "Priority",
+    "prio": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High"
+    },
+    "area": "Area",
+    "project": "Project / subproject",
+    "description": "Description",
+    "planLink": "Plan task",
+    "noPlanLink": "– no plan task –",
+    "openPlan": "View in the project plan",
+    "links": "Links",
+    "addLink": "Add link",
+    "removeLink": "Remove link",
+    "internalLabel": "Internal – the customer does not see this task",
+    "confirmDelete": "Delete task “{{title}}”?",
+    "status": {
+      "new": "New",
+      "doing": "In progress",
+      "waiting": "Waiting"
+    },
+    "mode": {
+      "table": "Table",
+      "kanban": "Kanban"
+    },
+    "groupBy": "Group by:",
+    "group": {
+      "due": "Due date",
+      "status": "Status",
+      "who": "Who",
+      "project": "Subproject",
+      "none": "None"
+    },
+    "dueGroup": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "week": "Next 7 days",
+      "later": "Later",
+      "none": "No date",
+      "done": "Done"
+    },
+    "nobody": "Nobody assigned",
+    "search": "Search tasks …",
+    "showDone": "Show done",
+    "count": "{{open}} open · {{done}} done",
+    "editStatuses": "Edit statuses",
+    "statusesIntro": "The statuses apply to all tasks of this project. “Done” is not a status but the check mark. When a status is removed, its tasks move to the first one.",
+    "addStatus": "Status",
+    "addPlaceholder": "New task, e.g. “Set up test access”",
+    "add": "Task",
+    "empty": "No tasks yet.",
+    "emptyCreate": "No tasks yet. Add the first one above.",
+    "myTitle": "My tasks",
+    "myEmpty": "Nothing open is assigned to you right now. 🎉",
+    "linkedTitle": "Related tasks"
   }
 }

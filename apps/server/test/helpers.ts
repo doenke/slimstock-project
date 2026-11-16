@@ -10,7 +10,7 @@ import { ensureAdmin, seedRoles } from '../src/db/seed.js';
 const ADMIN_URL = process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:54329/postgres';
 export const ADMIN_PASSWORD = 'admin-start-password-1';
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 /** A fresh database with migrations, default roles and an admin "admin" (start password already changed). */
 export async function createTestApp() {

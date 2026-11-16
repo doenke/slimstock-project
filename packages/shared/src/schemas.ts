@@ -222,3 +222,54 @@ export const CommentInput = z.object({
   text: trimmed(4000),
   internal: z.boolean().default(false),
 });
+
+// --- Tasks ---
+
+const taskLink = z.object({
+  url: z
+    .string()
+    .trim()
+    .max(2000)
+    .refine((u) => /^https?:\/\//i.test(u), 'invalid_url'),
+  label: optionalText(200),
+});
+
+export const CreateTaskInput = z.object({
+  title: trimmed(300),
+  /** Subproject (or the project itself) the task belongs to. */
+  projectId: z.uuid().optional(),
+  description: optionalText(8000),
+  statusId: z.string().max(40).optional(),
+  due: isoDate,
+  priority: z.enum(['low', 'normal', 'high']).default('normal'),
+  area: optionalText(80),
+  assignees: z.array(z.uuid()).max(50).default([]),
+  planItemKey: z.uuid().nullable().default(null),
+  internal: z.boolean().default(false),
+});
+
+export const UpdateTaskInput = z.object({
+  rev: z.number().int(),
+  title: trimmed(300).optional(),
+  projectId: z.uuid().optional(),
+  description: optionalText(8000).optional(),
+  statusId: z.string().max(40).optional(),
+  due: isoDate.optional(),
+  priority: z.enum(['low', 'normal', 'high']).optional(),
+  area: optionalText(80).optional(),
+  assignees: z.array(z.uuid()).max(50).optional(),
+  planItemKey: z.uuid().nullable().optional(),
+  internal: z.boolean().optional(),
+  done: z.boolean().optional(),
+  sort: z.number().finite().optional(),
+  links: z.array(taskLink).max(20).optional(),
+});
+
+export const TaskCommentInput = z.object({ text: trimmed(4000), internal: z.boolean().default(false) });
+
+export const TaskStatusesInput = z.object({
+  statuses: z
+    .array(z.object({ id: z.string().trim().min(1).max(40), label: optionalText(60) }))
+    .min(1)
+    .max(12),
+});

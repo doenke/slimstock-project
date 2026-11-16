@@ -8,7 +8,8 @@
     "admin": "Verwaltung",
     "account": "Konto",
     "profile": "Profil und Passwort",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "myTasks": "Meine Aufgaben"
   },
   "language": {
     "label": "Sprache",
@@ -61,7 +62,9 @@
     "status_not_allowed": "Das geht in diesem Zustand der Version nicht.",
     "unknown_version": "Diese Version gibt es nicht.",
     "link_only_for_customers": "Links gibt es nur für Personen beim Kunden – Slimstock meldet sich mit Benutzername und Passwort an.",
-    "reason_required": "Bitte gib bei einer Ablehnung eine Begründung an."
+    "reason_required": "Bitte gib bei einer Ablehnung eine Begründung an.",
+    "unknown_status": "Diesen Status gibt es nicht.",
+    "invalid_url": "Bitte eine Adresse mit http:// oder https:// angeben."
   },
   "permission": {
     "reader": "Leser",
@@ -493,5 +496,68 @@
     "approve": "Zustimmen",
     "reject": "Ablehnen",
     "noApproval": "Der Kunde hat diesem Entwurf (noch) nicht zugestimmt. Du kannst ihn trotzdem annehmen."
+  },
+  "tasks": {
+    "tab": "Aufgaben",
+    "title": "Aufgabe",
+    "done": "Erledigt",
+    "statusLabel": "Status",
+    "due": "Fällig",
+    "priority": "Priorität",
+    "prio": {
+      "low": "Niedrig",
+      "normal": "Normal",
+      "high": "Hoch"
+    },
+    "area": "Bereich",
+    "project": "Projekt / Teilprojekt",
+    "description": "Beschreibung",
+    "planLink": "Vorgang im Plan",
+    "noPlanLink": "– kein Vorgang –",
+    "openPlan": "Im Projektplan ansehen",
+    "links": "Links",
+    "addLink": "Link hinzufügen",
+    "removeLink": "Link entfernen",
+    "internalLabel": "Intern – der Kunde sieht diese Aufgabe nicht",
+    "confirmDelete": "Aufgabe „{{title}}“ löschen?",
+    "status": {
+      "new": "Neu",
+      "doing": "In Arbeit",
+      "waiting": "Wartet"
+    },
+    "mode": {
+      "table": "Tabelle",
+      "kanban": "Kanban"
+    },
+    "groupBy": "Gruppieren:",
+    "group": {
+      "due": "Fälligkeit",
+      "status": "Status",
+      "who": "Wer",
+      "project": "Teilprojekt",
+      "none": "Keine"
+    },
+    "dueGroup": {
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "week": "Nächste 7 Tage",
+      "later": "Später",
+      "none": "Ohne Datum",
+      "done": "Erledigt"
+    },
+    "nobody": "Niemand zugeordnet",
+    "search": "Aufgaben durchsuchen …",
+    "showDone": "Erledigte zeigen",
+    "count": "{{open}} offen · {{done}} erledigt",
+    "editStatuses": "Status bearbeiten",
+    "statusesIntro": "Die Status gelten für alle Aufgaben dieses Projekts. „Erledigt“ ist kein Status, sondern der Haken. Wird ein Status entfernt, wandern seine Aufgaben in den ersten.",
+    "addStatus": "Status",
+    "addPlaceholder": "Neue Aufgabe, z. B. „Testzugang einrichten“",
+    "add": "Aufgabe",
+    "empty": "Noch keine Aufgaben.",
+    "emptyCreate": "Noch keine Aufgaben. Leg oben die erste an.",
+    "myTitle": "Meine Aufgaben",
+    "myEmpty": "Dir ist gerade nichts Offenes zugeordnet. 🎉",
+    "linkedTitle": "Aufgaben dazu"
   }
 }

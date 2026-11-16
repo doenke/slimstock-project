@@ -1,3 +1,4 @@
+import type { TaskLink, TaskPriority } from '@spm/shared';
 import type { BillingTerms, Language, LocalizedText, PermissionLevel, PlanItem, PlanPm, ProjectStatus, Side } from '@spm/shared';
 import { sql } from 'drizzle-orm';
 
@@ -261,4 +262,55 @@ export const planComments = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('plan_comments_version_idx').on(t.versionId)],
+);
+
+/** The task list: open points and to-dos of a project or subproject (not versioned). */
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: id(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    /** The top-level project (for "all tasks of this project"). */
+    rootId: uuid('root_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    description: text('description'),
+    statusId: text('status_id').notNull(),
+    due: date('due'),
+    priority: text('priority').$type<TaskPriority>().notNull().default('normal'),
+    area: text('area'),
+    assignees: jsonb('assignees').$type<string[]>().notNull().default([]),
+    planItemKey: uuid('plan_item_key'),
+    internal: boolean('internal').notNull().default(false),
+    done: boolean('done').notNull().default(false),
+    doneAt: timestamp('done_at', { withTimezone: true }),
+    doneBy: uuid('done_by').references(() => users.id),
+    sort: doublePrecision('sort').notNull().default(0),
+    links: jsonb('links').$type<TaskLink[]>().notNull().default([]),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    rev: integer('rev').notNull().default(1),
+  },
+  (t) => [index('tasks_root_idx').on(t.rootId), index('tasks_project_idx').on(t.projectId)],
+);
+
+export const taskComments = pgTable(
+  'task_comments',
+  {
+    id: id(),
+    taskId: uuid('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    text: text('text').notNull(),
+    internal: boolean('internal').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index('task_comments_task_idx').on(t.taskId)],
 );

@@ -24,6 +24,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </Link>
         <nav className="mainnav">
           {nav('/', t('nav.projects'), path === '/' || path.startsWith('/projects'))}
+          {nav('/tasks', t('nav.myTasks'), path === '/tasks')}
           {me.isAdmin && nav('/admin/users', t('nav.admin'), path.startsWith('/admin'))}
         </nav>
         <div className="topbar-right">

@@ -40,6 +40,7 @@ import {
   planVersions,
   projectRoles,
   projects,
+  tasks,
   users,
   versionReviews,
 } from '../db/schema.js';
@@ -381,6 +382,21 @@ export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, versi
         internal: c.internal,
         at: c.createdAt.toISOString(),
       })),
+    linkedTasks: (
+      await db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          done: tasks.done,
+          planItemKey: tasks.planItemKey,
+          projectId: tasks.projectId,
+          internal: tasks.internal,
+        })
+        .from(tasks)
+        .where(and(eq(tasks.rootId, ctx.rootId), sql`${tasks.planItemKey} IS NOT NULL`))
+    )
+      .filter((t) => keys.has(t.planItemKey!) && ctx.levels.has(t.projectId) && (internalOk || !t.internal))
+      .map(({ internal: _i, ...t }) => ({ ...t, planItemKey: t.planItemKey! })),
     effort,
     compare,
   };

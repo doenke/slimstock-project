@@ -17,7 +17,7 @@ export function onUnauthorized(listener: Listener): () => void {
   return () => unauthorizedListeners.delete(listener);
 }
 
-export async function api<T>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, body?: unknown): Promise<T> {
+export async function api<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', url: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, {

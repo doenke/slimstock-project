@@ -265,6 +265,24 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, onChan
         </label>
       )}
 
+      {plan.linkedTasks.some((x) => x.planItemKey === item.key) && (
+        <section>
+          <h3>{t('tasks.linkedTitle')}</h3>
+          <ul className="plain small">
+            {plan.linkedTasks
+              .filter((x) => x.planItemKey === item.key)
+              .map((x) => (
+                <li key={x.id}>
+                  <Link to={`/projects/${x.projectId}?tab=tasks&task=${x.id}`} className={x.done ? 'is-done-link' : undefined}>
+                    {x.done ? '✓ ' : ''}
+                    {x.title}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+
       <section>
         <h3>{t('comments.title')}</h3>
         <Comments plan={plan} itemKey={item.key} onChanged={onChanged} />
