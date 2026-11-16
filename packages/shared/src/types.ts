@@ -1,0 +1,86 @@
+import type { Language, LocalizedText } from './languages.js';
+import type { PermissionLevel, Rights, Side } from './permissions.js';
+import type { ProjectStatus } from './schemas.js';
+
+/** API response shapes, shared by server and web. */
+
+export interface PublicConfig {
+  version: string;
+  defaultLanguage: Language;
+}
+
+export interface Me {
+  id: string;
+  username: string | null;
+  name: string;
+  email: string | null;
+  kind: 'staff' | 'customer';
+  isAdmin: boolean;
+  /** Own language choice; null = project language. */
+  language: Language | null;
+  mustChangePassword: boolean;
+}
+
+export interface UserRow {
+  id: string;
+  username: string | null;
+  name: string;
+  email: string | null;
+  kind: 'staff' | 'customer';
+  isAdmin: boolean;
+  active: boolean;
+  lastSeenAt: string | null;
+}
+
+export interface Role {
+  id: string;
+  side: Side;
+  names: LocalizedText;
+  calculated: boolean;
+  defaultPermission: PermissionLevel;
+  active: boolean;
+  sort: number;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+}
+
+export interface ProjectSummary {
+  id: string;
+  parentId: string | null;
+  customerId: string;
+  customerName: string;
+  name: string;
+  code: string | null;
+  status: ProjectStatus;
+  language: Language;
+  startDate: string | null;
+  endDate: string | null;
+  permission: PermissionLevel | null;
+  subprojectCount: number;
+}
+
+export interface ProjectDetail extends ProjectSummary {
+  description: string | null;
+  /** Ancestors from the top-level project down to the parent. */
+  path: { id: string; name: string }[];
+  subprojects: ProjectSummary[];
+  rights: Rights;
+}
+
+export interface Member {
+  userId: string;
+  name: string;
+  email: string | null;
+  kind: 'staff' | 'customer';
+  /** Membership in this very project; null if the person only comes from a parent project. */
+  membershipId: string | null;
+  roleIds: string[];
+  permissionOverride: PermissionLevel | null;
+  /** Roles from parent projects (read-only here). */
+  inheritedRoleIds: string[];
+  inheritedFrom: { id: string; name: string }[];
+  effectivePermission: PermissionLevel | null;
+}

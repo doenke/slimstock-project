@@ -1,0 +1,22 @@
+{
+  "name": "slimstock-project",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @spm/server db:generate",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"apps/*/test/**/*.ts\" \"packages/*/src/**/*.{ts,json}\"",
+    "format:check": "prettier --check \"apps/*/src/**/*.{ts,tsx,css}\" \"apps/*/test/**/*.ts\" \"packages/*/src/**/*.{ts,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}

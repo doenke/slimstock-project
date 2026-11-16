@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # x.yy.zzz (versions.json, scripts/version.mjs): yy counts days with changes, zzz is this run.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.v.outputs.app }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: v
+        run: echo "app=$(node scripts/version.mjs app)" >> "$GITHUB_OUTPUT"
+      - run: echo "Version ${{ steps.v.outputs.app }}" >> "$GITHUB_STEP_SUMMARY"
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  # Image for linux/amd64 and arm64, only from main. Started once and asked for /healthz before it is pushed.
+  image:
+    needs: [version, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Smoke test (build for this machine, start with Postgres, ask /healthz)
+        run: |
+          docker build -t spm-smoke --build-arg APP_VERSION=${{ needs.version.outputs.app }} .
+          docker network create smoke
+          docker run -d --name db --network smoke -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=spm postgres:17-alpine
+          for i in $(seq 1 30); do docker exec db pg_isready -U postgres -d spm && break; sleep 1; done
+          docker run -d --name app --network smoke -p 43871:43871 \
+            -e DATABASE_URL=postgres://postgres:pw@db:5432/spm -e PUBLIC_URL=http://localhost:43871 \
+            -e SESSION_KEY=smoke-test-session-key-0123456789abcdef spm-smoke
+          for i in $(seq 1 30); do curl -fsS http://localhost:43871/healthz && exit 0; sleep 1; done
+          docker logs app
+          exit 1
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ needs.version.outputs.app }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: APP_VERSION=${{ needs.version.outputs.app }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - run: echo "Image ghcr.io/${{ github.repository }}:${{ needs.version.outputs.app }}" >> "$GITHUB_STEP_SUMMARY"

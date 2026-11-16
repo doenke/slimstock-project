@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dev-dist/
+.env
+*.log
+coverage/
+
+# Own compose file (copied from compose.example.yml)
+compose.yml
+
+# Playwright
+test-results/
+playwright-report/

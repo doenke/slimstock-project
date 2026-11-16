@@ -1,0 +1,55 @@
+# Slimstock Projektmanagement mit Docker Compose.
+#
+#   cp compose.example.yml compose.yml
+#   cp .env.example .env          # ausfüllen: PUBLIC_URL, SESSION_KEY, POSTGRES_PASSWORD, ADMIN_*
+#   docker compose up -d
+#   docker compose ps             # beide Dienste sollten "healthy" zeigen
+#
+# Port 43871 ist ein Beispiel: vorher prüfen, dass er auf dem Host frei ist (sudo ss -tlnp | grep 43871).
+# Davor gehört ein Reverse Proxy mit HTTPS (Pflicht für die installierbare App).
+services:
+  app:
+    # Feste Version statt latest möglich, z. B. ghcr.io/doenke/slimstock-project:0.1.57
+    image: ghcr.io/doenke/slimstock-project:latest
+    # Alternativ lokal aus dem Repo bauen (Version zeigt dann "dev"):
+    # build: https://github.com/doenke/slimstock-project.git#main
+    # image: slimstock-project-app:latest
+    # labels:
+    #   - com.centurylinklabs.watchtower.enable=false
+    container_name: slimstock-project
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: Europe/Berlin
+      PORT: 43871
+      DATABASE_URL: postgres://spm:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}@db:5432/spm
+    ports:
+      - "43871:43871"     # Ziel für den Reverse Proxy: http://<host>:43871
+    healthcheck:
+      # /healthz antwortet nur mit 200, wenn auch die Datenbank erreichbar ist.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:43871/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    container_name: slimstock-project-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: spm
+      POSTGRES_USER: spm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt in .env}
+    volumes:
+      - /data/container/slimstock-project/db:/var/lib/postgresql/data
+    # keine ports: – nur im Compose-Netz erreichbar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spm -d spm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
