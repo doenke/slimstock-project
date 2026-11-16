@@ -1,15 +1,20 @@
-# Slimstock-Projekte – Plan
+# Slimstock Projektmanagement – Plan
 
 Stand: 16.11.2026 · Entwurf zur Abstimmung, noch kein Code.
 
 Eine Browser-App (PWA), in der Slimstock-Berater ihre Kundenprojekte führen und das Projektmanagement mit dem
-Kunden teilen: Projektplan mit Versionen, Taskliste, Flash-Reports und Meeting-Protokolle, Beteiligte mit
-Rechten. Kunden kommen ohne Konto per Magic Link hinein.
+Kunden teilen: Projektplan mit Arbeitsversion und Entwürfen, Taskliste, Meeting-Protokolle, Beteiligte mit
+Rechten. Kunden kommen ohne Konto über ihren persönlichen Link hinein.
 
-Grundlage ist die Projektplanung der Shopping-App (`doenke/shopping`, `docs/konzept/14-projektplanung.md`):
-Dauer, Aufwand, Vorgänger (FS/SS/FF/SF mit Abstand), Meilensteine, „Nicht vor“, Netzplan mit Puffer und
-kritischem Pfad, Ressourcenabgleich, Dauer aus Aufwand, Arbeitskalender, Gantt mit Ziehen, Tabelle und Kanban.
-Was dort gilt, gilt hier auch – soweit unten nichts anderes steht.
+Grundlage ist die Projektplanung der ToDo-Listen in der Shopping-App (`doenke/shopping`,
+`docs/konzept/14-projektplanung.md`): Dauer, Aufwand, Vorgänger (FS/SS/FF/SF mit Abstand), Meilensteine,
+„Nicht vor“, Netzplan mit Puffer und kritischem Pfad, Ressourcenabgleich, Dauer aus Aufwand,
+Arbeitskalender, Gantt mit Ziehen, Tabelle und Kanban. Rechenkern (`pm.ts`) und Gantt werden hierher kopiert
+und eigenständig weiterentwickelt. Was dort gilt, gilt hier auch – soweit unten nichts anderes steht.
+
+**Ablauf:** Zuerst ein Proof of Concept (POC) als Docker-Container auf garageband. Läuft der, zieht die App
+zu Slimstock um. Deshalb hängt nichts an garageband oder kanonenwiese.de: Adresse, Port, Datenbank und
+Mailversand kommen ausschließlich aus der Docker-Umgebung.
 
 ---
 
@@ -18,196 +23,246 @@ Was dort gilt, gilt hier auch – soweit unten nichts anderes steht.
 ```
 Projekt (Kunde X – Slim4-Einführung)
 ├─ Beteiligte + Rollen
-├─ Projektplan
-│   ├─ Version 1 „Angebot“          (eingefroren)
-│   ├─ Version 2 „Kick-off-Baseline“ (eingefroren, mit Kunde abgestimmt)
-│   └─ Version 3 „Arbeitsversion“    ← genau eine ist immer die Arbeitsversion
+├─ Projektplan (einer pro Projekt)
+│   ├─ Arbeitsversion          ← immer genau eine, wird laufend gepflegt
+│   ├─ Entwurf „Go-live 2 Wochen später“   (in Bearbeitung)
+│   ├─ Entwurf „Schulung vorziehen“        (zur Abstimmung beim Kunden)
+│   └─ Historie: frühere Arbeitsversionen  (schreibgeschützt)
 ├─ Teilprojekte
-│   ├─ Teilprojekt A (Schnittstellen)
-│   │   ├─ Taskliste
-│   │   └─ Flash-Reports / Protokolle
-│   └─ Teilprojekt B (Schulung)
+│   ├─ Teilprojekt A (Schnittstellen) – Taskliste, Protokolle
+│   └─ Teilprojekt B (Schulung)       – Taskliste, Protokolle
 ├─ Taskliste (Projekt-Ebene)
-└─ Flash-Reports / Meeting-Protokolle (Projekt-Ebene)
+└─ Meeting-Protokolle (Projekt-Ebene)
 ```
 
 - **Projekt**: gehört zu einem Kunden, hat Name, Kürzel, Zeitraum, Arbeitskalender, Status.
-- **Teilprojekt**: eigener Name, eigene Verantwortliche, eigene Taskliste und Reports. Teilprojekte können
-  weitere Teilprojekte haben (Baum); in der Oberfläche zunächst zwei Ebenen.
-- **Projektplan**: gehört zum Gesamtprojekt und umfasst alle Teilprojekte – sonst gingen Abhängigkeiten
-  zwischen Teilprojekten verloren (Schnittstelle fertig → Schulung kann beginnen). Jedes Teilprojekt ist im
-  Plan eine **Sammelzeile** (Phase), deren Zeitraum sich aus ihren Vorgängen ergibt.
+- **Teilprojekt**: eigener Name, eigene Verantwortliche, eigene Taskliste und Protokolle. Technisch ein Baum,
+  in der Oberfläche zunächst zwei Ebenen.
+- **Projektplan**: einer pro Projekt, er umfasst alle Teilprojekte. Jedes Teilprojekt ist im Plan eine
+  **Sammelzeile** (Phase), deren Zeitraum sich aus ihren Vorgängen ergibt. So bleiben Abhängigkeiten zwischen
+  Teilprojekten erhalten (Schnittstelle fertig → Schulung kann beginnen).
 
-## 2. Projektplan und Versionen
+## 2. Projektplan: Arbeitsversion und Entwürfe
 
 ### Vorgänge
 
-Wie in der Shopping-App (`attributes.pm`): Start, Ende, Dauer (Vorgabe vs. berechnet), Meilenstein,
-Nicht vor, Aufwand geplant/geleistet, Vorgänger mit Typ und Abstand, Personen (Ressourcen), Fälligkeit/Deadline.
-Neu dazu:
+Wie in der Shopping-App (`attributes.pm`): Start, Ende, Dauer (Vorgabe vs. berechnet), Meilenstein, Nicht vor,
+Aufwand geplant/geleistet, Vorgänger mit Typ und Abstand, Personen (Ressourcen), Deadline. Neu dazu:
 
-- **Sammelvorgänge/Phasen** (Hierarchie im Plan; Teilprojekte sind die oberste Ebene darunter).
-- **Fortschritt %** und **Ist-Start/Ist-Ende** – im Shopping-Konzept als „später möglich“ notiert, hier Pflicht.
-- **Verantwortlich auf Kundenseite** vs. Slimstock (für die Kundensicht und den Flash-Report).
-- **Sichtbarkeit**: „intern“ markierte Vorgänge sieht der Kunde nicht.
+- **Sammelvorgänge/Phasen** (Hierarchie; Teilprojekte sind die oberste Ebene darunter).
+- **Fortschritt %** und **Ist-Start/Ist-Ende**.
+- **Verantwortlich**: Slimstock oder Kunde (Person).
+- **Intern**: Vorgänge mit diesem Haken sieht der Kunde in keiner Version.
 
-### Versionen
+### Das Versionsmodell
 
-- Ein Plan hat beliebig viele **Versionen**. Genau eine ist die **Arbeitsversion**: nur sie ist bearbeitbar.
-- **Neue Version** = Kopie der Arbeitsversion. Beim Anlegen wählt man, ob die Kopie die neue Arbeitsversion
-  wird (die alte wird eingefroren) – das ist der Normalfall – oder ob nur ein eingefrorener Schnappschuss
-  entsteht („Stand Lenkungsausschuss 12.11.“).
-- Jede Version hat Name, Kommentar, Datum, Ersteller und einen Status: *Entwurf* · *Freigegeben (mit Kunde
-  abgestimmt)* · *Archiviert*. Eingefrorene Versionen sind schreibgeschützt.
-- **Basisplan / Vergleich**: Eine eingefrorene Version kann als Basisplan gewählt werden. Der Gantt zeigt
-  dann dünne graue Balken für den Basisplan unter den aktuellen Balken; eine Tabelle listet Verschiebungen
-  (Start/Ende/Dauer/Meilensteine in Tagen) – das ist auch die Zahl für den Flash-Report.
-- **Ältere Version wieder zur Arbeitsversion machen**: als „Neue Version aus Version 2“ (kopieren statt
-  zurückdrehen), damit die Historie nie verloren geht.
-- **Stabile Vorgangs-Schlüssel**: Jeder Vorgang behält über alle Versionen dieselbe `key`-ID. Darüber
-  laufen Vergleich, Basisplan und die Verknüpfung von Tasks mit Vorgängen.
-- **Was der Kunde sieht** (Projekteinstellung): entweder die Arbeitsversion live oder nur die zuletzt
-  *freigegebene* Version. Vorschlag: Standard „freigegebene Version“.
+- **Arbeitsversion** – es gibt immer genau eine. Sie ist der gültige Plan, an ihr wird laufend gearbeitet
+  (Fortschritt, Ist-Termine, kleine Korrekturen).
+- **Entwürfe** – beliebig viele, alle frei bearbeitbar. Ein neuer Entwurf ist eine Kopie der Arbeitsversion
+  (Normalfall) oder eines anderen Entwurfs. Jeder Entwurf hat Name, Beschreibung („Was ändert sich und
+  warum?“), Ersteller, Datum.
+- **Annehmen** – ein angenommener Entwurf wird zur neuen Arbeitsversion. Die bisherige Arbeitsversion wandert
+  schreibgeschützt in die **Historie** (mit Datum und wer angenommen hat). Danach geht es wie gewohnt weiter:
+  in der Arbeitsversion arbeiten, daraus neue Entwürfe machen.
+- **Verwerfen** – ein Entwurf, der nicht kommt, wird verworfen (bleibt in der Historie sichtbar, kann
+  wiederbelebt werden).
+- **Neue Projekte** starten mit einer leeren Arbeitsversion; der erste Plan kann direkt darin oder als
+  Entwurf entstehen.
+
+Status eines Entwurfs: *In Bearbeitung* → *Zur Abstimmung* → *Angenommen* · *Abgelehnt* · *Verworfen*.
+
+**Wenn sich die Arbeitsversion inzwischen geändert hat:** Während ein Entwurf entsteht, wird die
+Arbeitsversion weiter gepflegt (Fortschritt, Ist-Termine). Beim Annehmen zeigt die App deshalb, was sich in
+der Arbeitsversion seit dem Anlegen des Entwurfs geändert hat, und bietet pro Vorgang und Feld an, diese
+Änderung zu übernehmen. Vorschlag: Fortschritt, geleisteter Aufwand und Ist-Termine werden standardmäßig
+übernommen (sie beschreiben die Wirklichkeit, nicht die Planung), alles andere entscheidet man.
+Im POC genügt zunächst: Hinweis + Liste der Änderungen, Übernahme von Fortschritt/Ist/Aufwand automatisch.
+
+**Vergleichen:** Jede Version lässt sich mit jeder anderen vergleichen (Standard: Entwurf gegen
+Arbeitsversion). Im Gantt als graue Vergleichsbalken unter den Balken, dazu eine Tabelle der Unterschiede:
+neue/entfernte Vorgänge, Verschiebungen von Start/Ende/Dauer in Arbeitstagen, geänderte Meilensteine und
+Verknüpfungen, Auswirkung auf das Projektende. Möglich, weil jeder Vorgang über alle Versionen dieselbe
+`key`-ID behält. Über diese `key` hängen auch Tasks am Plan.
+
+### Abstimmung mit dem Kunden
+
+- **Pro Version einstellbar, ob der Kunde sie sieht** – die Arbeitsversion genauso wie jeder Entwurf und
+  jede Version der Historie. Der Kunde sieht eine Liste „Pläne“ mit genau diesen Versionen.
+- **Entwurf zur Abstimmung geben:** Der Entwurf wird für die Kunden-Projektleitung sichtbar und für die
+  Bearbeitung gesperrt, damit niemand einem sich bewegenden Ziel zustimmt. Wer ihn noch ändern will, holt ihn
+  zurück in *In Bearbeitung*; bereits abgegebene Zustimmungen verfallen dann.
+- **Der Kunde** sieht den Entwurf mit Vergleich zur Arbeitsversion, kann kommentieren (am Entwurf oder an
+  einem Vorgang) und **zustimmen** oder **ablehnen** (mit Begründung).
+- **Annehmen** macht die Slimstock-Projektleitung. Die Zustimmungen (wer, wann) werden mit der Version
+  gespeichert und bleiben in der Historie nachvollziehbar. Einstellbar pro Projekt: „Annehmen nur nach
+  Zustimmung der Kunden-Projektleitung“.
 
 ## 3. Taskliste
 
 Die Taskliste ist **nicht versioniert** und getrennt vom Plan – Tasks sind die laufenden To-dos und offenen
 Punkte („Kunde liefert Artikelstammdaten“, „Testzugang einrichten“).
 
-- Felder wie ToDo-Liste der Shopping-App: Titel, Beschreibung, Status (eigene Status je Projekt), Fällig,
-  Wer (mehrere Personen, auch Kunden), Priorität, Bereich/Tag, Kommentare, Anhänge, Links.
-- Ebene: Projekt oder Teilprojekt; optional **verknüpft mit einem Plan-Vorgang** (über dessen `key`).
-- Herkunft: von Hand, aus einem Meeting-Protokoll oder Flash-Report.
+- Felder wie die ToDo-Liste der Shopping-App: Titel, Beschreibung, Status (eigene Status je Projekt),
+  Fällig, Wer (mehrere Personen, auch Kunden), Priorität, Bereich, Kommentare, Anhänge, Links.
+- Ebene: Projekt oder Teilprojekt; optional **verknüpft mit einem Vorgang** im Plan (über dessen `key`,
+  bleibt also über alle Versionen bestehen).
+- Herkunft: von Hand oder aus einem Meeting-Protokoll.
 - Ansichten: Tabelle (gruppiert nach Fällig/Status/Wer/Teilprojekt), Kanban, „Meine Aufgaben“ über alle
-  Projekte.
+  Projekte – auch für Kunden.
 - Sichtbarkeit: *intern* oder *mit Kunde geteilt*.
-- Kunden können ihnen zugewiesene Tasks abhaken, kommentieren und den Status ändern (je nach Rolle).
+- Kunden können zugewiesene Tasks abhaken, kommentieren und den Status ändern (je nach Rolle).
 
-## 4. Flash-Report und Meeting-Protokoll
+## 4. Meeting-Protokoll
 
-Beides sind **Dokumente** mit Datum, Ebene (Projekt/Teilprojekt) und Status *Entwurf* → *Veröffentlicht*.
-Der Kunde sieht nur Veröffentlichtes. Veröffentlichte Dokumente sind eingefroren (Korrektur = neue Fassung
-mit Hinweis).
+Dokument mit Datum, Ebene (Projekt/Teilprojekt) und Status *Entwurf* → *Veröffentlicht*. Der Kunde sieht nur
+Veröffentlichtes.
 
-**Flash-Report** (Statusbericht, z. B. 14-tägig):
-- Ampeln: Gesamt, Termine, Budget/Aufwand, Umfang/Qualität – mit Trend (↑ → ↓) gegenüber dem letzten Report.
-- Automatisch vorbefüllt: Fortschritt, nächste/verpasste Meilensteine, Abweichung zum Basisplan,
-  erledigte und überfällige Tasks seit dem letzten Report, Aufwand geplant/geleistet.
-- Freitext: Erreicht · Nächste Schritte · Risiken & Probleme · Entscheidungsbedarf.
-- Neuer Report übernimmt Risiken/Entscheidungsbedarf aus dem letzten als Vorschlag.
+- Art (Kick-off, Jour fixe, Lenkungsausschuss, Workshop), Datum, Ort/Online, Teilnehmer (aus Beteiligten oder
+  frei), Agenda.
+- Punkte mit Typ: *Info* · *Entscheidung* · *Aufgabe*. Aufgaben werden beim Speichern zu Tasks (mit
+  Rückverweis), Entscheidungen landen im Entscheidungslog des Projekts.
+- Offene Tasks lassen sich im Meeting durchgehen und direkt aktualisieren.
+- PDF-Export im Slimstock-Design (Stufe 7).
 
-**Meeting-Protokoll**:
-- Art (Kick-off, Jour fixe, Lenkungsausschuss, Workshop), Datum, Ort/Online, Teilnehmer (aus Beteiligten
-  oder frei), Agenda.
-- Punkte mit Typ: *Info* · *Entscheidung* · *Aufgabe*. Aufgaben werden beim Speichern zu Tasks in der
-  Taskliste (mit Rückverweis), Entscheidungen landen in einem Entscheidungslog des Projekts.
-- Offene Tasks des Projekts lassen sich im Meeting durchgehen und direkt aktualisieren.
-
-Beide: PDF-Export im Slimstock-Design und „Per Mail an Teilnehmer“ (Link, kein Anhang mit Daten).
+**Flash-Report**: kommt später (siehe Abschnitt 8). Das Datenmodell sieht Dokumente mit Typ vor, er passt
+also ohne Umbau dazu.
 
 ## 5. Beteiligte und Rechte
 
-Beteiligte sind Personen mit einer **Rolle je Projekt**; in Teilprojekten kann eine Rolle ergänzt oder
-erhöht werden (nie gesenkt – vererbt wird von oben).
+Beteiligte sind Personen mit einer **Rolle je Projekt**; in Teilprojekten kann eine Rolle ergänzt oder erhöht
+werden (nie gesenkt – vererbt wird von oben).
 
 | Recht | Projektleitung (Slimstock) | Berater (Slimstock) | Projektleitung Kunde | Mitglied Kunde | Leser |
 | --- | :-: | :-: | :-: | :-: | :-: |
 | Interne Inhalte sehen | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Plan-Arbeitsversion bearbeiten | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Version anlegen / freigeben | ✅ | ❌ | Freigabe bestätigen | ❌ | ❌ |
+| Arbeitsversion und Entwürfe bearbeiten | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Entwurf anlegen | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Entwurf zur Abstimmung geben, annehmen; Sichtbarkeit für Kunden | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Freigegebene Versionen sehen und kommentieren | ✅ | ✅ | ✅ | ✅ | sehen |
+| Entwurf zustimmen / ablehnen | – | – | ✅ | ❌ | ❌ |
 | Tasks anlegen / bearbeiten | ✅ | ✅ | ✅ | eigene | ❌ |
-| Flash-Report / Protokoll schreiben, veröffentlichen | ✅ | ✅ (Entwurf) | Kommentieren | ❌ | ❌ |
+| Protokoll schreiben, veröffentlichen | ✅ | ✅ | kommentieren | ❌ | ❌ |
 | Beteiligte einladen, Rollen ändern | ✅ | ❌ | Kunden-Mitglieder | ❌ | ❌ |
-| Projekt lesen (freigegebene Inhalte) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-- **Slimstock-Mitarbeiter** melden sich per SSO (OIDC) an. Admins (Gruppe `admins`) legen Projekte an und
-  sehen alles.
-- **Kunden** haben kein Passwort: Zugang per Magic Link (Abschnitt 6).
+- **Admins** (Slimstock) legen Projekte und Slimstock-Benutzer an und sehen alles.
 - Alle Rechte prüft der Server; die Oberfläche blendet nur aus.
-- Änderungsprotokoll pro Projekt (wer hat wann was geändert), für Kunden nur über geteilte Inhalte.
+- Änderungsprotokoll pro Projekt (wer hat wann was geändert).
 
-## 6. Kundenzugang per Magic Link
+## 6. Anmeldung
 
-1. Projektleitung lädt eine Person mit E-Mail und Rolle ein → die App schickt eine Mail mit Link.
-2. Später: Kunde gibt auf der Startseite seine E-Mail ein → neue Mail mit Link (nur wenn die Adresse
-   eingeladen ist; die Antwort verrät nicht, ob es sie gibt).
-3. Link: einmalig nutzbar, 15 Minuten gültig, Token nur als Hash in der DB.
-4. Danach Sitzungscookie (HttpOnly, Secure, SameSite=Lax), z. B. 30 Tage, auf dem Gerät „merken“.
-5. Entzug: Rolle entfernen beendet sofort alle Sitzungen der Person für dieses Projekt.
-6. Rate-Limit pro Adresse und IP, Protokoll der Anmeldungen.
+### Slimstock-Mitarbeiter: Benutzername und Passwort
 
-Braucht einen Mailversand (SMTP-Zugang in der `.env`). Slimstock-Mitarbeiter könnten den Magic Link als
-Notlösung ebenfalls nutzen – Vorschlag: nein, nur SSO.
+- Admin legt Benutzer an (Benutzername, Name, E-Mail, Admin ja/nein) und vergibt ein Startpasswort; beim
+  ersten Login muss es geändert werden. Jeder kann sein Passwort ändern, ein Admin kann es zurücksetzen.
+- Passwörter als **Argon2id**-Hash, Mindestlänge 12, Rate-Limit und kurze Sperre nach Fehlversuchen.
+- Der **erste Admin** entsteht aus der Env (`ADMIN_USERNAME`, `ADMIN_PASSWORD`) beim ersten Start, wenn es
+  noch keinen Benutzer gibt.
+- Sitzung: signiertes Cookie (HttpOnly, Secure, SameSite=Lax), Schlüssel `SESSION_KEY` aus der Env.
+- Die Anmeldung ist so gekapselt, dass später das **Firmenlogin (OIDC, z. B. Microsoft Entra ID)** als
+  zweiter Weg dazukommt und bestehende Benutzer per E-Mail verknüpft werden.
+
+### Kunden: persönlicher Link ohne Ablauf
+
+- Jede eingeladene Kundenperson bekommt **einen persönlichen Link**, z. B. `https://<adresse>/k/<token>`.
+  Er läuft **nicht ab**. Wer ihn als Lesezeichen speichert, braucht kein Login.
+- Der Link gilt für die Person und damit für alle Projekte, in denen sie Beteiligte ist.
+- Token: 32 Byte Zufall. In der DB verschlüsselt (mit einem Schlüssel aus der Env), damit die Projektleitung
+  den Link jederzeit wieder **kopieren oder erneut zusenden** kann, ohne dass er sich ändert.
+- **Link erneuern** macht den alten sofort ungültig (z. B. wenn er weitergeleitet wurde). **Person
+  entfernen** sperrt den Zugang zu diesem Projekt sofort.
+- Beim Öffnen setzt die App zusätzlich ein Cookie, damit die installierte PWA auch ohne Link-Aufruf startet.
+- Schutz: `Referrer-Policy: no-referrer` (der Link landet nicht bei fremden Seiten), `noindex`, keine
+  externen Inhalte, Protokoll der Zugriffe (letzter Zugriff pro Person sichtbar), Rate-Limit auf `/k/`.
+- **Bewusste Grenze:** Wer den Link hat, ist drin – wie bei einem geteilten Dokument-Link. Das steht in der
+  Einladung, und die Rechte der Kundenrollen sind entsprechend begrenzt (nichts Internes, kein Löschen).
+- Versand: Die App zeigt den Link zum Kopieren/Teilen. Mailversand per SMTP ist optional (`SMTP_*` in der
+  Env); ohne SMTP wird einfach kopiert.
 
 ## 7. Technik
 
-**Vorschlag: Stack der Shopping-App, aber ohne Offline-Sync.**
+**Stack der Shopping-App, aber ohne Offline-Sync.**
 
 | Schicht | Wahl | Warum |
 | --- | --- | --- |
-| Server | Node 22 + Fastify, TypeScript | wie shopping; Mailversand, PDF, Jobs im selben Prozess |
+| Server | Node 22 + Fastify, TypeScript | wie shopping; Mail, PDF, Jobs im selben Prozess |
 | Datenbank | PostgreSQL 17 + Drizzle | Versionen, Rechte, Historie – relationale Daten |
 | Frontend | React + Vite, PWA | Gantt, Tabelle, Kanban aus shopping wiederverwendbar |
-| Geteilt | `packages/shared` mit Zod-Schemas und **`pm.ts` aus shopping** (Netzplan, Ressourcenabgleich) | eine Rechnung in Browser und Server (Server braucht sie für Flash-Report und PDF) |
+| Geteilt | `packages/shared`: Zod-Schemas, **`pm.ts` aus shopping**, Versionsvergleich | eine Rechnung in Browser und Server |
 | Echtzeit | WebSocket: „Projekt X hat sich geändert“ → neu laden | einfach; kein HLC/Feld-Sync nötig |
-| PDF | Headless-Chromium (Playwright) oder `pdfmake` | Flash-Report/Protokoll im CD |
-| Auth | OIDC (`openid-client`) + Magic Link + signierte Cookies | |
+| Passwörter | Argon2id (`@node-rs/argon2`) | |
+| PDF | Headless-Chromium oder `pdfmake` | Protokoll im Slimstock-CD (später) |
 
-Bewusst **online-first**: Die App braucht eine Verbindung; offline nur Lesen des zuletzt Geladenen. Der
-aufwendige Offline-Sync der Shopping-App (Feld-Uhren, IndexedDB-Vollkopie) lohnt sich hier nicht und macht
-Rechte und Versionen deutlich schwieriger. Gleichzeitiges Bearbeiten: optimistische Sperre pro Datensatz
-(Versionsnummer), bei Konflikt Hinweis „inzwischen geändert“.
+Bewusst **online-first**: Die App braucht eine Verbindung; offline nur Lesen des zuletzt Geladenen.
+Gleichzeitiges Bearbeiten: optimistische Sperre pro Datensatz (Versionsnummer), bei Konflikt Hinweis
+„inzwischen geändert“. Entwürfe haben dadurch kein Mehrbenutzer-Problem, das über das der Arbeitsversion
+hinausgeht.
 
-Betrieb nach den üblichen Konventionen: Docker-Image `ghcr.io/doenke/<app>`, Healthcheck `/healthz`,
-Versionierung x.yy.zzz, README im bekannten Stil, deutsche Oberfläche, englischer Code.
+### Konfiguration (alles per Docker-Env)
+
+| Variable | Wofür |
+| --- | --- |
+| `PUBLIC_URL` | Adresse der App, z. B. `https://projekte.example.org` – Subdomain ist noch offen |
+| `PORT` | Port im Container und auf dem Host (POC: zufälliger Port aus 30000–49151) |
+| `DATABASE_URL` | PostgreSQL |
+| `SESSION_KEY` | signiert Sitzungscookies |
+| `LINK_KEY` | verschlüsselt die Kunden-Links |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | erster Admin beim ersten Start |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | optionaler Mailversand |
+| `TRUSTED_PROXY` | `X-Forwarded-*` nur hinter Reverse Proxy vertrauen |
+| `TZ` | `Europe/Berlin` |
+
+Sonst wie üblich: Image `ghcr.io/doenke/slimstock-project`, Healthcheck `/healthz` (prüft DB),
+`compose.example.yml` mit Postgres, Versionierung x.yy.zzz, README im bekannten Stil, deutsche Oberfläche,
+englischer Code. Für den Umzug zu Slimstock: Image + Datenbank-Dump, keine weiteren Abhängigkeiten.
 
 ### Datenmodell (Skizze)
 
 ```
-users            id, kind (staff|customer), sub?, email, name, avatar, is_admin
+users            id, kind (staff|customer), username?, password_hash?, email, name, is_admin,
+                 link_token_enc?, link_rotated_at, last_seen_at
 customers        id, name
-projects         id, customer_id, parent_id?, name, code, calendar, settings, visible_plan (working|released)
+projects         id, customer_id, parent_id?, name, code, calendar, settings
 memberships      project_id, user_id, role, invited_by, created_at
-plan_versions    id, project_id, no, name, status (draft|released|archived), is_working, based_on, created_by, frozen_at
-plan_items       id, version_id, key, parent_key?, subproject_id?, title, pm (jsonb wie shopping), progress,
-                 actual_start, actual_end, internal, sort
-tasks            id, project_id, plan_item_key?, title, status, due, assignees[], priority, internal, source_doc_id?
-documents        id, project_id, type (flash|minutes), date, status, data (jsonb), published_at, author
+plan_versions    id, project_id, kind (working|draft|history), name, description,
+                 status (editing|in_review|accepted|rejected|discarded),
+                 based_on_version_id, based_on_snapshot_at, customer_visible,
+                 created_by, accepted_by, accepted_at, replaced_at
+version_reviews  version_id, user_id, verdict (approve|reject), comment, at
+plan_items       id, version_id, key, parent_key?, subproject_id?, title, pm (jsonb wie shopping),
+                 progress, actual_start, actual_end, owner_user_id?, internal, sort, rev
+tasks            id, project_id, plan_item_key?, title, status, due, assignees[], priority, internal,
+                 source_doc_id?, rev
+documents        id, project_id, type (minutes|flash), date, status, data (jsonb), published_at, author
 decisions        id, project_id, document_id, text, date
-comments         id, target (task|document|plan_item), author, text
-magic_tokens     id, user_id, hash, expires_at, used_at
-sessions / audit_log
+comments         id, target (version|plan_item|task|document), target_id, author, text, at
+sessions, audit_log
 ```
 
-Eindeutigkeit „genau eine Arbeitsversion“: partieller Unique-Index auf `plan_versions(project_id) WHERE is_working`.
+„Genau eine Arbeitsversion“: partieller Unique-Index auf `plan_versions(project_id) WHERE kind = 'working'`.
+Annehmen ist eine Transaktion: alte Arbeitsversion → `history`, Entwurf → `working`, Übernahmen aus der
+alten Arbeitsversion anwenden.
 
 ## 8. Ausbaustufen
 
 | Stufe | Inhalt |
 | --- | --- |
-| **1 – Gerüst** | Repo, Docker, Healthcheck, Versionierung, SSO-Login, Projekte + Teilprojekte anlegen, Beteiligte mit Rollen |
-| **2 – Plan** | `pm.ts` übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
-| **3 – Versionen** | Version anlegen/einfrieren/freigeben, Basisplan im Gantt, Vergleichstabelle |
-| **4 – Taskliste** | Tasks mit Tabelle/Kanban, Verknüpfung zum Plan, „Meine Aufgaben“ |
-| **5 – Kunden** | Magic Link, Mailversand, Kundensicht (nur Geteiltes/Freigegebenes), Rechteprüfung, Tests dazu |
-| **6 – Dokumente** | Meeting-Protokoll (→ Tasks, Entscheidungslog), Flash-Report mit Ampeln und Automatik |
-| **7 – Feinschliff** | PDF-Export im CD, Kommentare, Änderungsprotokoll, Benachrichtigungen per Mail |
+| **1 – Gerüst** | Repo, Docker + Postgres, Healthcheck, Versionierung, Login mit Benutzername/Passwort, Benutzerverwaltung, Projekte + Teilprojekte, Beteiligte mit Rollen |
+| **2 – Plan** | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
+| **3 – Entwürfe** | Entwürfe anlegen/bearbeiten/verwerfen, Vergleich (Gantt + Tabelle), Annehmen mit Übernahme der Ist-Daten, Historie |
+| **4 – Kunden** | Persönliche Links, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |
+| **5 – Taskliste** | Tasks mit Tabelle/Kanban, Verknüpfung zum Plan, „Meine Aufgaben“ |
+| **6 – Protokolle** | Meeting-Protokoll → Tasks, Entscheidungslog |
+| **7 – Feinschliff** | PDF-Export im CD, Änderungsprotokoll, Mail-Benachrichtigungen (neuer Entwurf zur Abstimmung, Task zugewiesen) |
 
-Später möglich: Import/Export MS Project (XML) und Excel, Aufwandserfassung, Projektportfolio über alle
-Kunden, MCP-Schnittstelle wie in shopping.
+**Später:** Flash-Report (Ampeln mit Trend, automatisch vorbefüllt aus Plan und Tasks), Firmenlogin per OIDC,
+Umzug zu Slimstock, Import/Export MS Project (XML) und Excel, Projektportfolio über alle Kunden,
+MCP-Schnittstelle wie in shopping.
 
 ## 9. Offene Fragen
 
-1. **Login für Slimstock-Mitarbeiter**: Kanonenwiese SSO (Pocket ID) oder das Firmen-Login von Slimstock
-   (Microsoft Entra ID)? Soll die App nur für dich oder für Kollegen sein?
-2. **Hosting**: Kundendaten auf garageband (Docker) – passt das datenschutzrechtlich, oder soll es auf
-   Slimstock-Infrastruktur/einen gemieteten Server? Danach richten sich Subdomain und Mailversand.
-3. **Plan pro Projekt oder pro Teilprojekt?** Vorschlag: ein Plan fürs Gesamtprojekt, Teilprojekte als
-   Phasen darin; Versionen gelten für den ganzen Plan.
-4. **Kundensicht auf den Plan**: nur freigegebene Version (Vorschlag) oder live die Arbeitsversion?
-5. **Was genau steht im Flash-Report?** Gibt es eine bestehende Slimstock-Vorlage (PowerPoint/Excel), die
-   nachgebaut werden soll?
-6. **„Was in der Shopping-App unter Projektmanagement schon da ist“** – gemeint ist die Projektplanung der
-   ToDo-Listen (Netzplan, Gantt, Ressourcen, Kanban)? Code übernehmen (kopieren) oder als gemeinsames Paket?
-   Vorschlag: `pm.ts` und Gantt kopieren und hier weiterentwickeln.
-7. **Name und Subdomain** der App.
+1. **Annehmen ohne Kunden-Zustimmung:** Darf die Slimstock-Projektleitung einen Entwurf auch ohne
+   Zustimmung annehmen (Vorschlag: ja, pro Projekt umstellbar)?
+2. **Übernahme beim Annehmen:** Passt der Vorschlag, Fortschritt, Ist-Termine und geleisteten Aufwand aus der
+   Arbeitsversion automatisch in den angenommenen Entwurf zu übernehmen?
+3. **Meeting-Protokolle** im ersten Wurf behalten (Stufe 6) oder zusammen mit dem Flash-Report nach hinten?
+4. **Kunden-Link** pro Person für alle Projekte (Vorschlag) oder pro Person und Projekt?
