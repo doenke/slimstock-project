@@ -214,3 +214,11 @@ export const CreateDraftInput = z.object({
 });
 export const UpdateVersionInput = z.object({ name: trimmed(160).optional(), description: optionalText(4000).optional() });
 export const VersionStatusInput = z.object({ status: z.enum(['editing', 'in_review', 'discarded']) });
+
+export const VisibilityInput = z.object({ customerVisible: z.boolean() });
+export const ReviewInput = z.object({ verdict: z.enum(['approve', 'reject']), comment: optionalText(2000) });
+export const CommentInput = z.object({
+  itemKey: z.uuid().nullable().default(null),
+  text: trimmed(4000),
+  internal: z.boolean().default(false),
+});

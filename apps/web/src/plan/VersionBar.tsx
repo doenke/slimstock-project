@@ -31,6 +31,13 @@ export function VersionBar({ projectId, plan, versions, compareId, onShow, onCha
   const [dialog, setDialog] = useState<'new' | 'edit' | 'accept' | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Shown at once; the server's answer (reload) confirms it.
+  const [visible, setVisible] = useState(v.customerVisible);
+  const [shownFor, setShownFor] = useState(`${v.id}${v.customerVisible}`);
+  if (shownFor !== `${v.id}${v.customerVisible}`) {
+    setShownFor(`${v.id}${v.customerVisible}`);
+    setVisible(v.customerVisible);
+  }
   const status = async (next: 'editing' | 'in_review' | 'discarded') => {
     setBusy(true);
     try {
@@ -74,6 +81,7 @@ export function VersionBar({ projectId, plan, versions, compareId, onShow, onCha
         <span className={`badge version-badge status-${v.kind === 'draft' ? v.status : v.kind}`}>
           {v.kind === 'draft' ? t(`versions.status.${v.status}`) : t(`versions.kind.${v.kind}`)}
         </span>
+        {v.customerVisible && plan.rights.createDraft && <span className="badge visible-badge">👁 {t('versions.customerVisible')}</span>}
         <label className="version-compare">
           <span className="small muted">{t('versions.compareWith')}</span>
           <select value={compareId ?? ''} onChange={(e) => onShow(v.kind === 'working' ? null : v.id, e.target.value || null)}>
@@ -157,6 +165,32 @@ export function VersionBar({ projectId, plan, versions, compareId, onShow, onCha
           </div>
         )}
       </div>
+      {plan.rights.manageVersions && (
+        <label className="check small visibility-toggle">
+          <input
+            type="checkbox"
+            checked={visible}
+            disabled={busy}
+            onChange={async (e) => {
+              const next = e.target.checked;
+              setVisible(next);
+              setBusy(true);
+              try {
+                await post(`/api/plan-versions/${v.id}/visibility`, { customerVisible: next });
+                onChanged();
+              } catch (err) {
+                setVisible(!next);
+                setError((err as { code?: string }).code ?? 'internal');
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+          {t('versions.visibleLabel')}
+        </label>
+      )}
+      <Reviews version={v} />
+      {plan.rights.review && <ReviewBox version={v} onChanged={onChanged} />}
       <ErrorText code={error} />
 
       {dialog === 'new' && (
@@ -272,6 +306,9 @@ function AcceptDialog({
     <Dialog title={t('versions.acceptTitle', { version: versionLabel(t, version) })} onClose={onClose} wide>
       <form className="stack" onSubmit={onSubmit}>
         <p>{t('versions.acceptIntro')}</p>
+        {version.customerVisible && !version.reviews.some((r) => !r.stale && r.verdict === 'approve') && (
+          <p className="warn-box small">⚠ {t('reviews.noApproval')}</p>
+        )}
         {loadError ? (
           <ErrorText code={loadError} />
         ) : !data ? (
@@ -362,5 +399,67 @@ function AcceptDialog({
         </div>
       </form>
     </Dialog>
+  );
+}
+
+/** Verdicts of the customer on this draft (voided ones greyed out). */
+function Reviews({ version }: { version: PlanVersionInfo }) {
+  const { t } = useTranslation();
+  if (!version.reviews.length) return null;
+  return (
+    <ul className="reviews">
+      {version.reviews.map((r) => (
+        <li key={`${r.userId}${r.at}`} className={r.stale ? 'stale' : undefined}>
+          <span className={`badge review-${r.verdict}`}>{t(`reviews.${r.verdict}d`)}</span> <strong>{r.userName}</strong>{' '}
+          <span className="muted small">{formatDateTime(r.at)}</span>
+          {r.stale && <span className="muted small"> · {t('reviews.stale')}</span>}
+          {r.comment && <div className="small">„{r.comment}“</div>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** For the customer's project lead: approve or reject the draft in review. */
+function ReviewBox({ version, onChanged }: { version: PlanVersionInfo; onChanged: () => void }) {
+  const { t } = useTranslation();
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const send = async (verdict: 'approve' | 'reject') => {
+    if (verdict === 'reject' && !comment.trim()) return setError('reason_required');
+    setBusy(true);
+    try {
+      await post(`/api/plan-versions/${version.id}/review`, { verdict, comment });
+      setComment('');
+      setError(null);
+      onChanged();
+    } catch (e) {
+      setError((e as { code?: string }).code ?? 'internal');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="review-box">
+      <p className="small">{t('reviews.intro')}</p>
+      <textarea
+        rows={2}
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder={t('reviews.commentPlaceholder')}
+        maxLength={2000}
+        aria-label={t('reviews.commentPlaceholder')}
+      />
+      <div className="row">
+        <button type="button" className="primary" disabled={busy} onClick={() => void send('approve')}>
+          ✓ {t('reviews.approve')}
+        </button>
+        <button type="button" className="danger" disabled={busy} onClick={() => void send('reject')}>
+          ✕ {t('reviews.reject')}
+        </button>
+      </div>
+      <ErrorText code={error} />
+    </div>
   );
 }

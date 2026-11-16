@@ -5,6 +5,7 @@ import { get } from '../api';
 import { Dialog, ErrorText, Field, Loading, PageError, useLoad, useSubmit } from '../components/ui';
 import { navigate, useLocation } from '../router';
 import i18n from '../i18n';
+import { Comments } from './Comments';
 import { DiffPanel } from './DiffPanel';
 import { BudgetPanel, EffortTable, fmtDays, type EffortMode } from './EffortView';
 import { VersionBar, versionLabel } from './VersionBar';
@@ -153,6 +154,12 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
           }}
         />
       )}
+      <details className="card version-comments">
+        <summary>
+          {t('comments.versionTitle')} ({plan.comments.filter((c) => !c.itemKey).length})
+        </summary>
+        <Comments plan={plan} itemKey={null} onChanged={() => void reload()} />
+      </details>
       {plan.compare && <DiffPanel diff={plan.compare.diff} versionLabel={versionLabel(t, plan.compare.version)} onSelect={setSelected} />}
       {!edit && plan.rights.createDraft && plan.version.kind !== 'working' && (
         <p className="muted small">{t(plan.version.status === 'in_review' ? 'versions.lockedReview' : 'versions.lockedOld')}</p>

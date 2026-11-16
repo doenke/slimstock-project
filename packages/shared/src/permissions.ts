@@ -44,6 +44,10 @@ export function rightsOf(level: PermissionLevel | null) {
     editPlan: isSlimstockLevel(level),
     /** Hand drafts to the customer, accept them, decide what the customer sees. */
     manageVersions: level === 'pl_slimstock',
+    /** Approve or reject drafts handed over for review (the customer's project lead). */
+    reviewDrafts: level === 'pl_customer',
+    /** Comment on plan versions and tasks. */
+    comment: r >= rank('team_customer'),
     editTasks: r >= rank('team_customer'),
   };
 }

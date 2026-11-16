@@ -39,6 +39,7 @@ export function EffortSection({
   const editPlan = plan.rights.edit && !!item && leaf;
   const shown = list.filter((r) => added.includes(r.id) || e?.plan[r.id] || e?.actual[r.id] || item?.remaining[r.id]);
   const addable = list.filter((r) => !shown.includes(r));
+  if (!shown.length && !editPlan) return null;
   return (
     <section className="effort-section">
       <h3>{t('effort.effortTitle')}</h3>

@@ -115,11 +115,15 @@ async function listMembers(db: DbOrTx, projectId: string): Promise<Member[]> {
       inheritedRoleIds: [],
       inheritedFrom: [],
       effectivePermission: null,
+      hasLink: false,
+      linkLastUsedAt: null,
     };
     if (own) {
       m.membershipId = membership.id;
       m.roleIds = roles.map((r) => r.roleId);
       m.permissionOverride = membership.permissionOverride;
+      m.hasLink = !!membership.linkTokenHash;
+      m.linkLastUsedAt = membership.linkLastUsedAt?.toISOString() ?? null;
     } else {
       m.inheritedRoleIds.push(...roles.map((r) => r.roleId).filter((id) => !m.inheritedRoleIds.includes(id)));
       m.inheritedFrom.push({ id: membership.projectId, name: names.get(membership.projectId) ?? '' });

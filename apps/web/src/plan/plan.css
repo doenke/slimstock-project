@@ -923,3 +923,98 @@ a.button:hover {
   border-color: var(--primary);
   text-decoration: none;
 }
+
+/* Customer access: visibility, reviews, comments */
+.visible-badge {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--primary);
+}
+.visibility-toggle {
+  align-self: flex-start;
+}
+.reviews {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.reviews li.stale {
+  opacity: 0.55;
+}
+.badge.review-approve {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+}
+.badge.review-reject {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+.review-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+}
+.review-box p {
+  margin: 0;
+}
+.version-comments {
+  padding: 0.6rem 1rem;
+}
+.version-comments summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.comments ul {
+  list-style: none;
+  margin: 0.4rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.comments li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.comments li.internal .comment-body {
+  border-left: 3px solid var(--muted);
+  padding-left: 0.4rem;
+}
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+.comment-body p {
+  margin: 0.1rem 0 0;
+  white-space: pre-wrap;
+}
+.comment-author {
+  color: var(--text);
+}
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.warn-text {
+  color: color-mix(in srgb, var(--orange) 70%, var(--text));
+  margin: 0;
+}
+.panel-title {
+  font-size: 1.05rem;
+  flex: 1;
+}
+.version-select {
+  min-width: 0;
+  max-width: 100%;
+}
+.version-select select {
+  max-width: 100%;
+}

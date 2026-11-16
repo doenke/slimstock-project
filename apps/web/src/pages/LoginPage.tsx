@@ -23,6 +23,11 @@ export function LoginPage() {
         <img src="/icon.svg" alt="" width="56" height="56" />
         <h1>{t('app.name')}</h1>
         <p className="muted">{t('login.intro')}</p>
+        {new URLSearchParams(location.search).get('link') === 'invalid' && (
+          <p className="error" role="alert">
+            {t('login.linkInvalid')}
+          </p>
+        )}
         <Field label={t('login.username')}>
           <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
         </Field>

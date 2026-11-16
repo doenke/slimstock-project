@@ -22,6 +22,8 @@ const EnvSchema = z.object({
     .transform((u) => u.replace(/\/$/, '')),
   /** Signs the session cookie. */
   SESSION_KEY: z.string().min(32, 'mindestens 32 Zeichen, z. B. `openssl rand -base64 32`'),
+  /** Encrypts the customers' personal links (so they can be shown again). Default: derived from SESSION_KEY. */
+  LINK_KEY: optional,
   /** First admin, created on the first start when there are no users yet. */
   ADMIN_USERNAME: optional,
   ADMIN_PASSWORD: optional,

@@ -31,7 +31,18 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
-import { effortEntries, memberRoles, memberships, planItems, planVersions, projectRoles, projects, users } from '../db/schema.js';
+import {
+  effortEntries,
+  memberRoles,
+  memberships,
+  planComments,
+  planItems,
+  planVersions,
+  projectRoles,
+  projects,
+  users,
+  versionReviews,
+} from '../db/schema.js';
 import { chainOf, levelsForUser, loadTree, type ProjectNode } from './access.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 
@@ -189,6 +200,21 @@ export async function versionInfo(db: DbOrTx, version: VersionRow, end: string |
     replacedAt: version.replacedAt?.toISOString() ?? null,
     customerVisible: version.customerVisible,
     end,
+    reviews: (
+      await db
+        .select({ r: versionReviews, userName: users.name })
+        .from(versionReviews)
+        .innerJoin(users, eq(users.id, versionReviews.userId))
+        .where(eq(versionReviews.versionId, version.id))
+        .orderBy(asc(versionReviews.createdAt))
+    ).map(({ r, userName }) => ({
+      userId: r.userId,
+      userName,
+      verdict: r.verdict,
+      comment: r.comment,
+      at: r.createdAt.toISOString(),
+      stale: r.stale,
+    })),
   };
 }
 
@@ -333,7 +359,28 @@ export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, versi
       editSettings: rootRights.editProject,
       createDraft: rootRights.editPlan,
       manageVersions: rootRights.manageVersions,
+      review: rootRights.reviewDrafts && version.kind === 'draft' && version.status === 'in_review' && version.customerVisible,
+      comment: [...ctx.levels.values()].some((l) => rightsOf(l).comment) && version.kind !== 'history',
     },
+    comments: (
+      await db
+        .select({ c: planComments, userName: users.name, kind: users.kind })
+        .from(planComments)
+        .innerJoin(users, eq(users.id, planComments.userId))
+        .where(eq(planComments.versionId, version.id))
+        .orderBy(asc(planComments.createdAt))
+    )
+      .filter(({ c }) => (internalOk || !c.internal) && (!c.itemKey || keys.has(c.itemKey)))
+      .map(({ c, userName, kind }) => ({
+        id: c.id,
+        itemKey: c.itemKey,
+        userId: c.userId,
+        userName,
+        kind,
+        text: c.text,
+        internal: c.internal,
+        at: c.createdAt.toISOString(),
+      })),
     effort,
     compare,
   };
@@ -388,6 +435,20 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
       if (!version) throw notFound();
     } else {
       version = await workingVersion(db, ctx.rootId, request.user.id);
+      // Customers who may not see the working version get the most relevant version shared with them.
+      if (!canSeeVersion(ctx, version)) {
+        const shared = await db
+          .select()
+          .from(planVersions)
+          .where(and(eq(planVersions.projectId, ctx.rootId), eq(planVersions.customerVisible, true)));
+        const pick = shared.sort(
+          (a, b) =>
+            Number(b.status === 'in_review') - Number(a.status === 'in_review') ||
+            Number(b.kind === 'working') - Number(a.kind === 'working') ||
+            b.no - a.no,
+        )[0];
+        if (pick) version = pick;
+      }
     }
     return payload(db, request.user, ctx, version, request.query.compare);
   });

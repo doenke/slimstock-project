@@ -14,7 +14,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { del, get, patch, post } from '../api';
 import { Avatar, Dialog, ErrorText, Field, Loading, PageError, PermissionBadge, RoleChips, useLoad, useSubmit } from '../components/ui';
+import { formatDateTime } from '../format';
 import { useSession } from '../session';
+import { LinkDialog } from './LinkDialog';
 
 const sideOf = (m: { kind: 'staff' | 'customer' }): Side => (m.kind === 'staff' ? 'slimstock' : 'customer');
 
@@ -24,6 +26,7 @@ export function MembersPanel({ project }: { project: ProjectDetail }) {
   const { data: members, error, setData } = useLoad(() => get<Member[]>(`/api/projects/${project.id}/members`), [project.id]);
   const [adding, setAdding] = useState<Side | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
+  const [linkFor, setLinkFor] = useState<Member | null>(null);
   const canManage = (m: Member) => project.rights.manageAllMembers || (project.rights.manageMembers && m.kind === 'customer');
 
   if (error) return <PageError code={error} />;
@@ -71,6 +74,15 @@ export function MembersPanel({ project }: { project: ProjectDetail }) {
                   <PermissionBadge level={m.effectivePermission} />
                   {m.permissionOverride && <span className="muted small">{t('members.overridden')}</span>}
                 </div>
+                {canManage(m) && m.kind === 'customer' && m.membershipId && (
+                  <button
+                    className="small"
+                    onClick={() => setLinkFor(m)}
+                    title={m.linkLastUsedAt ? t('links.lastUsed', { date: formatDateTime(m.linkLastUsedAt) }) : undefined}
+                  >
+                    🔗 {t('links.button')}
+                  </button>
+                )}
                 {canManage(m) && (
                   <button className="small" onClick={() => setEditing(m)}>
                     {m.membershipId ? t('common.edit') : t('members.addRolesHere')}
@@ -96,6 +108,7 @@ export function MembersPanel({ project }: { project: ProjectDetail }) {
           onSaved={(list) => (setData(list), setAdding(null))}
         />
       )}
+      {linkFor && <LinkDialog project={project} member={linkFor} onClose={() => setLinkFor(null)} />}
       {editing && (
         <MemberDialog
           project={project}

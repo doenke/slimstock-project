@@ -59,7 +59,9 @@
     "unknown_subproject": "Dieses Teilprojekt gibt es nicht (mehr).",
     "assignee_not_member": "Nur Beteiligte des Projekts können eingeplant werden.",
     "status_not_allowed": "Das geht in diesem Zustand der Version nicht.",
-    "unknown_version": "Diese Version gibt es nicht."
+    "unknown_version": "Diese Version gibt es nicht.",
+    "link_only_for_customers": "Links gibt es nur für Personen beim Kunden – Slimstock meldet sich mit Benutzername und Passwort an.",
+    "reason_required": "Bitte gib bei einer Ablehnung eine Begründung an."
   },
   "permission": {
     "reader": "Leser",
@@ -84,7 +86,8 @@
     "username": "Benutzername",
     "password": "Passwort",
     "submit": "Anmelden",
-    "customerHint": "Als Kunde brauchst du kein Passwort – du bekommst einen persönlichen Link zu deinem Projekt."
+    "customerHint": "Als Kunde brauchst du kein Passwort – du bekommst einen persönlichen Link zu deinem Projekt.",
+    "linkInvalid": "Dieser Link gilt nicht (mehr). Bitte frag in deinem Projekt nach einem neuen."
   },
   "password": {
     "title": "Passwort ändern",
@@ -348,7 +351,9 @@
     "acceptConfirm": "Jetzt annehmen",
     "lockedReview": "Dieser Entwurf liegt zur Abstimmung und ist gesperrt. Zum Ändern zurückholen.",
     "lockedOld": "Diese Version ist nur zum Ansehen. Für Änderungen einen neuen Entwurf daraus anlegen.",
-    "baseline": "Im Vergleich"
+    "baseline": "Im Vergleich",
+    "customerVisible": "für den Kunden sichtbar",
+    "visibleLabel": "Der Kunde sieht diese Version"
   },
   "diff": {
     "end": "Projektende {{from}} → {{to}} ({{shift}} Arbeitstage)",
@@ -450,5 +455,43 @@
     "unitName": "Abrechnungseinheit",
     "sumSlimstock": "Summe Slimstock",
     "sumCustomer": "Summe Kunde"
+  },
+  "links": {
+    "button": "Link",
+    "title": "Persönlicher Link für {{name}}",
+    "link": "Link",
+    "intro": "Mit diesem Link kommt die Person ohne Passwort direkt in dieses Projekt. Er läuft nicht ab – am besten als Lesezeichen speichern.",
+    "copy": "Kopieren",
+    "copied": "Kopiert ✓",
+    "share": "Teilen …",
+    "mail": "Per E-Mail senden",
+    "mailSubject": "Dein Zugang zum Projekt „{{project}}“",
+    "mailBody": "Hallo {{name}},\n\nhier ist dein persönlicher Zugang zum Projekt „{{project}}“:\n{{url}}\n\nDu brauchst kein Passwort. Speichere den Link am besten als Lesezeichen und gib ihn nicht weiter – wer ihn hat, sieht das Projekt.\n\nViele Grüße",
+    "lastUsed": "Zuletzt geöffnet: {{date}}",
+    "neverUsed": "Noch nicht geöffnet.",
+    "warning": "Wer den Link hat, ist drin. Wurde er weitergegeben, erneuere ihn – der alte gilt dann sofort nicht mehr.",
+    "renew": "Link erneuern",
+    "confirmRenew": "Neuen Link für {{name}} erzeugen? Der bisherige gilt sofort nicht mehr, offene Sitzungen enden."
+  },
+  "comments": {
+    "title": "Kommentare",
+    "versionTitle": "Kommentare zu dieser Version",
+    "none": "Noch keine Kommentare.",
+    "placeholder": "Kommentar schreiben …",
+    "send": "Senden",
+    "internal": "intern",
+    "internalLabel": "Intern (nur Slimstock)",
+    "delete": "Kommentar löschen",
+    "confirmDelete": "Diesen Kommentar löschen?"
+  },
+  "reviews": {
+    "approved": "Zugestimmt",
+    "rejected": "Abgelehnt",
+    "stale": "vor dem Zurückholen – gilt nicht mehr",
+    "intro": "Dieser Entwurf liegt dir zur Abstimmung vor. Sieh dir die Änderungen an und stimme zu – oder lehne mit Begründung ab.",
+    "commentPlaceholder": "Kommentar (bei Ablehnung Pflicht)",
+    "approve": "Zustimmen",
+    "reject": "Ablehnen",
+    "noApproval": "Der Kunde hat diesem Entwurf (noch) nicht zugestimmt. Du kannst ihn trotzdem annehmen."
   }
 }

@@ -17,6 +17,6 @@ cleanupOutdatedCaches();
 // the cached app shell answers. API calls and the health check are never cached.
 registerRoute(
   new NavigationRoute(new NetworkFirst({ cacheName: `pages-${__APP_VERSION__}`, networkTimeoutSeconds: 4 }), {
-    denylist: [/^\/api\//, /^\/healthz/],
+    denylist: [/^\/api\//, /^\/healthz/, /^\/k\//],
   }),
 );

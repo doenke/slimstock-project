@@ -29,6 +29,13 @@
       "when": 1794832323252,
       "tag": "0003_effort",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794834010425,
+      "tag": "0004_customer_access",
+      "breakpoints": true
     }
   ]
 }

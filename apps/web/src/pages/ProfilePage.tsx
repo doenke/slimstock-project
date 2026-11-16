@@ -23,9 +23,11 @@ export function ProfilePage() {
       <h1>{t('profile.title')}</h1>
       <section className="card">
         <form className="stack" onSubmit={onSubmit}>
-          <Field label={t('login.username')}>
-            <input value={me.username ?? ''} disabled />
-          </Field>
+          {me.kind === 'staff' && (
+            <Field label={t('login.username')}>
+              <input value={me.username ?? ''} disabled />
+            </Field>
+          )}
           <Field label={t('profile.name')}>
             <input value={name} onChange={(e) => (setName(e.target.value), setSaved(false))} required />
           </Field>
@@ -41,11 +43,13 @@ export function ProfilePage() {
           </div>
         </form>
       </section>
-      <section className="card">
-        <h2>{t('password.title')}</h2>
-        <PasswordForm onDone={() => setPasswordSaved(true)} />
-        {passwordSaved && <p className="success">{t('password.changed')}</p>}
-      </section>
+      {me.kind === 'staff' && (
+        <section className="card">
+          <h2>{t('password.title')}</h2>
+          <PasswordForm onDone={() => setPasswordSaved(true)} />
+          {passwordSaved && <p className="success">{t('password.changed')}</p>}
+        </section>
+      )}
     </div>
   );
 }

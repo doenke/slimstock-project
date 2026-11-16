@@ -59,7 +59,9 @@
     "unknown_subproject": "This subproject does not exist (any more).",
     "assignee_not_member": "Only people on the project can be assigned.",
     "status_not_allowed": "Not possible in the version's current state.",
-    "unknown_version": "This version does not exist."
+    "unknown_version": "This version does not exist.",
+    "link_only_for_customers": "Links are for customer people only – Slimstock logs in with user name and password.",
+    "reason_required": "Please give a reason when rejecting."
   },
   "permission": {
     "reader": "Reader",
@@ -84,7 +86,8 @@
     "username": "User name",
     "password": "Password",
     "submit": "Log in",
-    "customerHint": "As a customer you don't need a password – you get a personal link to your project."
+    "customerHint": "As a customer you don't need a password – you get a personal link to your project.",
+    "linkInvalid": "This link is not valid (any more). Please ask your project for a new one."
   },
   "password": {
     "title": "Change password",
@@ -348,7 +351,9 @@
     "acceptConfirm": "Accept now",
     "lockedReview": "This draft is in review and locked. Take it back to change it.",
     "lockedOld": "This version is view only. Create a new draft from it to make changes.",
-    "baseline": "Compared version"
+    "baseline": "Compared version",
+    "customerVisible": "visible to the customer",
+    "visibleLabel": "The customer sees this version"
   },
   "diff": {
     "end": "Project end {{from}} → {{to}} ({{shift}} working days)",
@@ -450,5 +455,43 @@
     "unitName": "Billing unit",
     "sumSlimstock": "Total Slimstock",
     "sumCustomer": "Total customer"
+  },
+  "links": {
+    "button": "Link",
+    "title": "Personal link for {{name}}",
+    "link": "Link",
+    "intro": "With this link the person gets straight into this project without a password. It does not expire – best saved as a bookmark.",
+    "copy": "Copy",
+    "copied": "Copied ✓",
+    "share": "Share …",
+    "mail": "Send by e-mail",
+    "mailSubject": "Your access to the project “{{project}}”",
+    "mailBody": "Hello {{name}},\n\nhere is your personal access to the project “{{project}}”:\n{{url}}\n\nYou don't need a password. Best save the link as a bookmark and don't pass it on – whoever has it sees the project.\n\nKind regards",
+    "lastUsed": "Last opened: {{date}}",
+    "neverUsed": "Not opened yet.",
+    "warning": "Whoever has the link is in. If it was passed on, renew it – the old one stops working at once.",
+    "renew": "Renew link",
+    "confirmRenew": "Create a new link for {{name}}? The current one stops working at once and open sessions end."
+  },
+  "comments": {
+    "title": "Comments",
+    "versionTitle": "Comments on this version",
+    "none": "No comments yet.",
+    "placeholder": "Write a comment …",
+    "send": "Send",
+    "internal": "internal",
+    "internalLabel": "Internal (Slimstock only)",
+    "delete": "Delete comment",
+    "confirmDelete": "Delete this comment?"
+  },
+  "reviews": {
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "stale": "before it was taken back – no longer valid",
+    "intro": "This draft is waiting for your review. Look at the changes and approve – or reject with a reason.",
+    "commentPlaceholder": "Comment (required when rejecting)",
+    "approve": "Approve",
+    "reject": "Reject",
+    "noApproval": "The customer has not approved this draft (yet). You can accept it anyway."
   }
 }

@@ -1,6 +1,6 @@
 # Slimstock Projektmanagement – Plan
 
-Stand: 16.11.2026 · Stufen 1–4 umgesetzt (Gerüst, Login, Projektrollen, Projekte, Beteiligte, Deutsch/Englisch, Projektplan mit Tabelle und Gantt, Entwürfe mit Vergleich, Annehmen und Historie, Aufwandskalkulation mit Ist, Prognose, Festpreis und Excel-Export).
+Stand: 16.11.2026 · Stufen 1–5 umgesetzt (Gerüst, Login, Projektrollen, Projekte, Beteiligte, Deutsch/Englisch, Projektplan mit Tabelle und Gantt, Entwürfe mit Vergleich, Annehmen und Historie, Aufwandskalkulation mit Ist, Prognose, Festpreis und Excel-Export, Kundenzugang per persönlichem Link mit Sichtbarkeit je Version, Abstimmung und Kommentaren).
 
 Eine Browser-App (PWA), in der Slimstock-Berater ihre Kundenprojekte führen und das Projektmanagement mit dem
 Kunden teilen: Projektplan mit Arbeitsversion und Entwürfen, Aufwandskalkulation, Taskliste, Beteiligte mit
@@ -457,7 +457,7 @@ für jede Version.
 | **2 – Plan** ✅ | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
 | **3 – Entwürfe** ✅ | Entwürfe anlegen/bearbeiten/verwerfen, Vergleich (Gantt + Tabelle), Annehmen mit Übernahme der Ist-Daten, Historie |
 | **4 – Kalkulation** ✅ | Tage pro Vorgang und Projektrolle, Summen, Vergleich Δ Tage, Ist-Buchungen von Hand, Rest/Prognose, Abrechnungsart mit Festpreis-Budget, Excel-Export |
-| **5 – Kunden** | Persönliche Links pro Projekt, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |
+| **5 – Kunden** ✅ | Persönliche Links pro Projekt, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |
 | **6 – Taskliste** | Tasks mit Tabelle/Kanban, Verknüpfung zum Plan, „Meine Aufgaben“ |
 | **7 – Feinschliff** | Änderungsprotokoll, Mail-Benachrichtigungen (neuer Entwurf zur Abstimmung, Task zugewiesen) |
 

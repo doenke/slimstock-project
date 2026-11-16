@@ -100,8 +100,17 @@ export const memberships = pgTable(
     permissionOverride: text('permission_override').$type<PermissionLevel>(),
     invitedBy: uuid('invited_by').references(() => users.id),
     createdAt: createdAt(),
+    /** Customer people: personal link for this project (SHA-256 for lookup, encrypted to show it again). */
+    linkTokenHash: text('link_token_hash'),
+    linkTokenEnc: text('link_token_enc'),
+    linkCreatedAt: timestamp('link_created_at', { withTimezone: true }),
+    linkLastUsedAt: timestamp('link_last_used_at', { withTimezone: true }),
   },
-  (t) => [uniqueIndex('memberships_project_user_idx').on(t.projectId, t.userId), index('memberships_user_idx').on(t.userId)],
+  (t) => [
+    uniqueIndex('memberships_project_user_idx').on(t.projectId, t.userId),
+    index('memberships_user_idx').on(t.userId),
+    uniqueIndex('memberships_link_idx').on(t.linkTokenHash),
+  ],
 );
 
 export const memberRoles = pgTable(
@@ -212,4 +221,44 @@ export const effortEntries = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('effort_entries_project_idx').on(t.projectId, t.itemKey)],
+);
+
+/** Customer approval or rejection of a draft handed over for review. */
+export const versionReviews = pgTable(
+  'version_reviews',
+  {
+    id: id(),
+    versionId: uuid('version_id')
+      .notNull()
+      .references(() => planVersions.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    verdict: text('verdict').$type<'approve' | 'reject'>().notNull(),
+    comment: text('comment'),
+    /** The draft was taken back for editing afterwards: this review no longer counts. */
+    stale: boolean('stale').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index('version_reviews_version_idx').on(t.versionId)],
+);
+
+/** Comments on a plan version or one of its tasks. */
+export const planComments = pgTable(
+  'plan_comments',
+  {
+    id: id(),
+    versionId: uuid('version_id')
+      .notNull()
+      .references(() => planVersions.id, { onDelete: 'cascade' }),
+    itemKey: uuid('item_key'),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    text: text('text').notNull(),
+    /** Only for Slimstock. */
+    internal: boolean('internal').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index('plan_comments_version_idx').on(t.versionId)],
 );

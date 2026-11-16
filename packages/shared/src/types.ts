@@ -85,6 +85,36 @@ export interface Member {
   inheritedRoleIds: string[];
   inheritedFrom: { id: string; name: string }[];
   effectivePermission: PermissionLevel | null;
+  /** Customer people: a personal link exists for this project, and when it was last used. */
+  hasLink: boolean;
+  linkLastUsedAt: string | null;
+}
+
+export interface MemberLink {
+  url: string;
+  createdAt: string | null;
+  lastUsedAt: string | null;
+}
+
+export interface VersionReview {
+  userId: string;
+  userName: string;
+  verdict: 'approve' | 'reject';
+  comment: string | null;
+  at: string;
+  /** Given before the draft was taken back for editing – no longer valid. */
+  stale: boolean;
+}
+
+export interface PlanComment {
+  id: string;
+  itemKey: string | null;
+  userId: string;
+  userName: string;
+  kind: 'staff' | 'customer';
+  text: string;
+  internal: boolean;
+  at: string;
 }
 
 export interface PlanPerson {
@@ -105,7 +135,9 @@ export interface PlanPayload {
   total: RowPlan | null;
   projectStart: string;
   people: PlanPerson[];
-  rights: { edit: boolean; editSettings: boolean; createDraft: boolean; manageVersions: boolean };
+  rights: { edit: boolean; editSettings: boolean; createDraft: boolean; manageVersions: boolean; review: boolean; comment: boolean };
+  /** Comments on this version and its tasks (internal ones only for Slimstock). */
+  comments: PlanComment[];
   /** Effort estimation as far as the user may see it (null: nothing). */
   effort: PlanEffort | null;
   /** With ?compare=<version>: the other version's dates per row and what changed (from it to this one). */
@@ -150,6 +182,7 @@ export interface PlanVersionInfo {
   customerVisible: boolean;
   /** Planned end of the version (null when empty). */
   end: string | null;
+  reviews: VersionReview[];
 }
 
 /** What accepting a draft does to the working version. */

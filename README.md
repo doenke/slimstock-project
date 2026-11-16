@@ -11,14 +11,14 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 4.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> **Stand: Proof of Concept, Stufe 5.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
 > Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt), Entwürfe
-> mit Vergleich und Historie sowie die Aufwandskalkulation sind da. Kundenzugang per Link und Taskliste
-> folgen – siehe [PLAN.md](PLAN.md).
+> mit Vergleich und Historie, die Aufwandskalkulation und der Kundenzugang per persönlichem Link mit
+> Abstimmung und Kommentaren sind da. Die Taskliste folgt – siehe [PLAN.md](PLAN.md).
 
-| Projekte | Projektplan | Entwurf im Vergleich | Kalkulation |
+| Projektplan | Entwurf im Vergleich | Kalkulation | Kundensicht |
 | --- | --- | --- | --- |
-| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Kalkulation mit Plan, Ist, Rest und Prognose je Seite und dem Budget je Teilprojekt](docs/screenshots/kalkulation.png) |
+| ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Kalkulation mit Plan, Ist, Rest und Prognose je Seite und dem Budget je Teilprojekt](docs/screenshots/kalkulation.png) | ![Der Kunde sieht den freigegebenen Plan, stimmt einem Entwurf zu und kommentiert einen Vorgang](docs/screenshots/kundensicht.png) |
 
 ## Was Slimstock Projektmanagement für dich macht
 
@@ -56,6 +56,13 @@ Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
   verwaltet ihre eigenen Leute, Leser lesen. Im Einzelfall stellst du es pro Person anders ein.
 - **Einmal eingetragen, überall dabei** – wer im Projekt ist, ist auch in allen Teilprojekten dabei.
   Im Teilprojekt kannst du zusätzliche Rollen vergeben, etwa die Projektleitung nur für die Schulung.
+- **Der Kunde ist dabei – ohne Passwort** – jede Person beim Kunden bekommt pro Projekt einen
+  persönlichen Link. Einmal geöffnet oder als Lesezeichen gespeichert, ist sie drin. Wird der Link
+  weitergegeben, erneuerst du ihn mit einem Klick – der alte gilt sofort nicht mehr.
+- **Du entscheidest, was der Kunde sieht** – je Version: die Arbeitsversion, ein Entwurf zur
+  Abstimmung, eine alte Version. Interne Vorgänge und interne Kommentare sieht er nie.
+- **Abstimmung und Kommentare** – die Projektleitung beim Kunden stimmt einem Entwurf zu oder lehnt
+  mit Begründung ab; alle können am Plan und an einzelnen Vorgängen kommentieren.
 - **Der Kunde bleibt für sich** – Kundenpersonen sehen nur ihre Projekte und nichts, was intern ist.
   Slimstock-Kollegen sehen nur die Projekte, in denen sie eingetragen sind.
 - **Deutsch und Englisch** – jedes Projekt hat seine Sprache, und jeder kann jederzeit selbst
@@ -178,6 +185,23 @@ Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sic
 wenn es im Einzelfall anders sein soll, stellst du sie direkt ein. Über die E-Mail erkennt die App
 dieselbe Kundenperson in mehreren Projekten wieder.
 
+### 9. Den Kunden einladen
+
+Bei jeder Person auf Kundenseite gibt es den Knopf **🔗 Link**: Er zeigt den persönlichen Link für
+dieses Projekt zum **Kopieren**, **Teilen** oder **per E-Mail senden** (öffnet dein Mailprogramm mit
+einem fertigen Text in der Sprache, die du gerade nutzt). Der Link läuft nicht ab; du siehst, wann er
+zuletzt geöffnet wurde. **Link erneuern** macht den alten sofort ungültig und beendet offene Sitzungen.
+Die Projektleitung beim Kunden kann ihren eigenen Leuten ebenfalls Links geben.
+
+Was der Kunde im Plan sieht, entscheidest du je Version mit dem Haken **„Der Kunde sieht diese
+Version“** in der Versionsleiste. **Zur Abstimmung geben** zeigt einen Entwurf automatisch; die
+Projektleitung beim Kunden sieht ihn mit Änderungsliste und kann **zustimmen** oder **ablehnen** (mit
+Begründung). Holst du den Entwurf zurück, verschwindet er beim Kunden und bisherige Zustimmungen
+verfallen. Beim Annehmen zeigt die App an, ob der Kunde zugestimmt hat – annehmen kannst du trotzdem.
+
+Kommentare gibt es zur ganzen Version und an jedem Vorgang. Slimstock kann Kommentare als **intern**
+markieren; die sieht der Kunde nicht.
+
 ## Sprachen
 
 Die Projektsprache bestimmt, was alle in diesem Projekt standardmäßig sehen. Über das 🌐-Menü oben
@@ -187,7 +211,10 @@ bleibt, wie es ist.
 
 ## Was die App (noch) nicht kann
 
-- Kundenzugang (samt Abstimmung durch den Kunden) kommt in der nächsten Stufe.
+- Die App verschickt selbst keine Mails – den Link teilst du per Kopieren, Teilen oder über dein
+  Mailprogramm.
+- Wer den Link hat, ist drin – wie bei einem geteilten Dokument. Gib ihn nur der Person selbst.
+- Die Taskliste kommt in der nächsten Stufe.
 - Keine Preise und keine Euro – bewusst. Ist-Zeiten kommen noch nicht aus einer Zeiterfassung.
 - Änderungen, die in der Arbeitsversion gemacht wurden, während ein Entwurf entstand, lassen sich beim
   Annehmen noch nicht einzeln übernehmen – die App zeigt sie nur an.
@@ -204,6 +231,7 @@ bleibt, wie es ist.
 | --- | --- |
 | `PUBLIC_URL` | Adresse der App, so wie sie im Browser steht – die Subdomain wählst du frei. |
 | `SESSION_KEY` | Signiert die Anmelde-Cookies (`openssl rand -base64 32`). Ändern meldet alle ab. |
+| `LINK_KEY` | Optional: verschlüsselt die Kunden-Links in der Datenbank. Leer = aus `SESSION_KEY` abgeleitet. Ändern macht gespeicherte Links unlesbar (sie lassen sich dann nur erneuern). |
 | `POSTGRES_PASSWORD` | Passwort der Datenbank im Compose-Netz. |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Erster Admin, nur beim allerersten Start. |
 | `DEFAULT_LANGUAGE` | `de` oder `en`: Sprache neuer Projekte und der Anmeldeseite. |

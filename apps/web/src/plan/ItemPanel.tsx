@@ -12,6 +12,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../format';
 import { Link } from '../router';
+import { Comments } from './Comments';
 import { EffortSection } from './EffortSection';
 import { conflictTexts, daysText } from './text';
 
@@ -94,15 +95,17 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, onChan
   return (
     <aside className="plan-panel" aria-label={item.title}>
       <header>
-        <h2 className="sr-only">{item.title}</h2>
-        <CommitInput
-          className="title-input"
-          value={item.title}
-          onCommit={(v) => v.trim() && save({ title: v.trim() })}
-          disabled={!edit}
-          aria-label={t('plan.col.name')}
-          maxLength={300}
-        />
+        <h2 className={edit ? 'sr-only' : 'panel-title'}>{item.title}</h2>
+        {edit && (
+          <CommitInput
+            className="title-input"
+            value={item.title}
+            onCommit={(v) => v.trim() && save({ title: v.trim() })}
+            disabled={!edit}
+            aria-label={t('plan.col.name')}
+            maxLength={300}
+          />
+        )}
         <button className="icon-button" onClick={onClose} aria-label={t('common.close')}>
           ✕
         </button>
@@ -119,6 +122,8 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, onChan
           <p className="muted small">{t('plan.phaseHint')}</p>
           <Summary c={c} />
         </>
+      ) : !edit ? (
+        <ReadOnlyFacts plan={plan} item={item} />
       ) : (
         <>
           <label className="check">
@@ -253,10 +258,17 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, onChan
         </dl>
       )}
 
-      <label className="check">
-        <input type="checkbox" checked={item.internal} disabled={!edit} onChange={(e) => save({ internal: e.target.checked })} />
-        {t('plan.internalLabel')}
-      </label>
+      {plan.rights.createDraft && (
+        <label className="check">
+          <input type="checkbox" checked={item.internal} disabled={!edit} onChange={(e) => save({ internal: e.target.checked })} />
+          {t('plan.internalLabel')}
+        </label>
+      )}
+
+      <section>
+        <h3>{t('comments.title')}</h3>
+        <Comments plan={plan} itemKey={item.key} onChanged={onChanged} />
+      </section>
 
       {edit && <div className="panel-actions">{actions}</div>}
     </aside>
@@ -345,28 +357,36 @@ function Links({
               <button type="button" className="link" onClick={() => onSelect(key)}>
                 {pred.title}
               </button>
-              <select
-                value={dep.type}
-                disabled={!edit || types.length === 1}
-                onChange={(e) => set(key, { ...dep, type: e.target.value as DepType })}
-                aria-label={t('plan.linkType')}
-              >
-                {DEP_TYPES.filter((d) => types.includes(d)).map((d) => (
-                  <option key={d} value={d}>
-                    {t(`plan.dep.${d}`)}
-                  </option>
-                ))}
-              </select>
-              <CommitInput
-                type="number"
-                step={0.5}
-                className="lag"
-                value={String(minutesToDays(dep.lag))}
-                disabled={!edit}
-                onCommit={(v) => set(key, { ...dep, lag: daysToMinutes(Number(v) || 0) })}
-                aria-label={t('plan.lag')}
-                title={t('plan.lagHint')}
-              />
+              {!edit ? (
+                <span className="muted small">
+                  {t(`plan.dep.${dep.type}`)}
+                  {dep.lag ? ` ${dep.lag > 0 ? '+' : ''}${minutesToDays(dep.lag)}` : ''}
+                </span>
+              ) : (
+                <select
+                  value={dep.type}
+                  disabled={!edit || types.length === 1}
+                  onChange={(e) => set(key, { ...dep, type: e.target.value as DepType })}
+                  aria-label={t('plan.linkType')}
+                >
+                  {DEP_TYPES.filter((d) => types.includes(d)).map((d) => (
+                    <option key={d} value={d}>
+                      {t(`plan.dep.${d}`)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {edit && (
+                <CommitInput
+                  type="number"
+                  step={0.5}
+                  className="lag"
+                  value={String(minutesToDays(dep.lag))}
+                  onCommit={(v) => set(key, { ...dep, lag: daysToMinutes(Number(v) || 0) })}
+                  aria-label={t('plan.lag')}
+                  title={t('plan.lagHint')}
+                />
+              )}
               {edit && (
                 <button type="button" className="icon-button" onClick={() => set(key, null)} aria-label={t('plan.removeLink')}>
                   ✕
@@ -409,5 +429,55 @@ function Links({
         </>
       )}
     </section>
+  );
+}
+
+/** The task for people who only read: plain facts instead of locked form fields. */
+function ReadOnlyFacts({ plan, item }: { plan: PlanPayload; item: PlanItem }) {
+  const { t } = useTranslation();
+  const c = plan.computed[item.key];
+  const who = item.assignees.map((id) => plan.people.find((p) => p.userId === id)?.name ?? '?');
+  return (
+    <dl className="facts">
+      {c && (
+        <>
+          <dt>{item.pm.milestone ? t('plan.milestone') : t('project.period')}</dt>
+          <dd>{item.pm.milestone ? formatDate(c.start) : `${formatDate(c.start)} – ${formatDate(c.end)}`}</dd>
+          {!item.pm.milestone && (
+            <>
+              <dt>{t('plan.col.duration')}</dt>
+              <dd>{daysText(t, c.duration)}</dd>
+            </>
+          )}
+        </>
+      )}
+      {item.pm.deadline && (
+        <>
+          <dt>{t('plan.deadline')}</dt>
+          <dd>{formatDate(item.pm.deadline)}</dd>
+        </>
+      )}
+      <dt>{t('plan.col.progress')}</dt>
+      <dd>
+        <span className="progress">
+          <span style={{ width: `${item.progress}%` }} />
+        </span>{' '}
+        {item.progress} %
+      </dd>
+      {(item.actualStart || item.actualEnd) && (
+        <>
+          <dt>{t('plan.actualStart')}</dt>
+          <dd>
+            {formatDate(item.actualStart) || '–'} {item.actualEnd && `– ${formatDate(item.actualEnd)}`}
+          </dd>
+        </>
+      )}
+      {who.length > 0 && (
+        <>
+          <dt>{t('plan.col.who')}</dt>
+          <dd>{who.join(', ')}</dd>
+        </>
+      )}
+    </dl>
   );
 }

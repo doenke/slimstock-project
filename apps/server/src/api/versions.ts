@@ -1,7 +1,10 @@
 import {
   ACTUAL_FIELDS,
   AcceptInput,
+  CommentInput,
   CreateDraftInput,
+  ReviewInput,
+  VisibilityInput,
   planByUnit,
   totalOf,
   type PlanTree,
@@ -19,7 +22,7 @@ import { and, asc, eq, max, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
-import { planItems, planVersions } from '../db/schema.js';
+import { planComments, planItems, planVersions, versionReviews } from '../db/schema.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 import {
   allItems,
@@ -178,8 +181,74 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
       (status === 'editing' && version.status === 'discarded' && (rights.manageVersions || own)) ||
       (status === 'discarded' && (version.status === 'editing' || version.status === 'in_review') && (rights.manageVersions || own));
     if (!allowed) throw rights.editPlan ? new ApiError(409, 'status_not_allowed') : forbidden();
-    const [next] = await db.update(planVersions).set({ status }).where(eq(planVersions.id, version.id)).returning();
+    // Handing over shows the draft to the customer; taking it back hides it and voids the reviews given so far.
+    const visibility =
+      status === 'in_review' ? { customerVisible: true } : version.status === 'in_review' ? { customerVisible: false } : {};
+    const [next] = await db
+      .update(planVersions)
+      .set({ status, ...visibility })
+      .where(eq(planVersions.id, version.id))
+      .returning();
+    if (version.status === 'in_review')
+      await db.update(versionReviews).set({ stale: true }).where(eq(versionReviews.versionId, version.id));
     return versionInfo(db, next!, null);
+  });
+
+  /** Whether the customer sees this version (any kind: working version, draft, history). */
+  app.post<{ Params: { vid: string } }>('/api/plan-versions/:vid/visibility', async (request) => {
+    const { version, ctx } = await versionFor(db, request.user, request.params.vid);
+    if (!rightsOf(ctx.rootLevel).manageVersions) throw forbidden();
+    const { customerVisible } = parse(VisibilityInput, request.body);
+    const [next] = await db.update(planVersions).set({ customerVisible }).where(eq(planVersions.id, version.id)).returning();
+    return versionInfo(db, next!, null);
+  });
+
+  /** The customer's project lead approves or rejects a draft in review (a new verdict replaces the last one). */
+  app.post<{ Params: { vid: string } }>('/api/plan-versions/:vid/review', async (request) => {
+    const { version, ctx } = await versionFor(db, request.user, request.params.vid);
+    if (!rightsOf(ctx.rootLevel).reviewDrafts) throw forbidden();
+    if (version.kind !== 'draft' || version.status !== 'in_review' || !version.customerVisible)
+      throw new ApiError(409, 'status_not_allowed');
+    const input = parse(ReviewInput, request.body);
+    if (input.verdict === 'reject' && !input.comment) throw new ApiError(400, 'reason_required');
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(versionReviews)
+        .where(and(eq(versionReviews.versionId, version.id), eq(versionReviews.userId, request.user.id), eq(versionReviews.stale, false)));
+      await tx
+        .insert(versionReviews)
+        .values({ versionId: version.id, userId: request.user.id, verdict: input.verdict, comment: input.comment });
+    });
+    return versionInfo(db, version, null);
+  });
+
+  app.post<{ Params: { vid: string } }>('/api/plan-versions/:vid/comments', async (request, reply) => {
+    const { version, ctx } = await versionFor(db, request.user, request.params.vid);
+    if (![...ctx.levels.values()].some((l) => rightsOf(l).comment) || version.kind === 'history') throw forbidden();
+    const input = parse(CommentInput, request.body);
+    const internal = input.internal && request.user.kind === 'staff';
+    if (input.itemKey) {
+      const [item] = await db
+        .select({ internal: planItems.internal })
+        .from(planItems)
+        .where(and(eq(planItems.versionId, version.id), eq(planItems.key, input.itemKey)));
+      if (!item || (item.internal && request.user.kind !== 'staff')) throw new ApiError(400, 'unknown_item');
+    }
+    const [row] = await db
+      .insert(planComments)
+      .values({ versionId: version.id, itemKey: input.itemKey, userId: request.user.id, text: input.text, internal })
+      .returning({ id: planComments.id });
+    return reply.code(201).send(row);
+  });
+
+  /** Own comments can be deleted; the Slimstock project lead may delete any. */
+  app.delete<{ Params: { cid: string } }>('/api/plan-comments/:cid', async (request) => {
+    const [comment] = await db.select().from(planComments).where(eq(planComments.id, request.params.cid));
+    if (!comment) throw notFound();
+    const { ctx } = await versionFor(db, request.user, comment.versionId);
+    if (comment.userId !== request.user.id && !rightsOf(ctx.rootLevel).manageVersions) throw forbidden();
+    await db.delete(planComments).where(eq(planComments.id, comment.id));
+    return { ok: true };
   });
 
   /** What accepting would do: actual data taken over, changes in the working version that get lost. */
