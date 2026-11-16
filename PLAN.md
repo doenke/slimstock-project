@@ -4,7 +4,8 @@ Stand: 16.11.2026 · Entwurf zur Abstimmung, noch kein Code.
 
 Eine Browser-App (PWA), in der Slimstock-Berater ihre Kundenprojekte führen und das Projektmanagement mit dem
 Kunden teilen: Projektplan mit Arbeitsversion und Entwürfen, Aufwandskalkulation, Taskliste, Beteiligte mit
-Rechten. Kunden kommen ohne Konto über ihren persönlichen Link hinein. Später kommen Projektdesign aus
+Rechten. Kunden kommen ohne Konto über ihren persönlichen Link hinein. Die App ist mehrsprachig (Deutsch und
+Englisch, Sprache je Projekt). Später kommen Projektdesign aus
 Vorlagen, Meeting-Protokolle und Flash-Reports dazu.
 
 Grundlage ist die Projektplanung der ToDo-Listen in der Shopping-App (`doenke/shopping`,
@@ -107,46 +108,67 @@ Arbeitsversion werden immer automatisch in den angenommenen Entwurf übernommen.
 
 ## 3. Aufwandskalkulation
 
+Kalkuliert wird ausschließlich in **Tagen pro Projektrolle und Projektschritt** – keine Preise, keine Euro.
+Angebote und Preise bleiben außerhalb der App.
+
 Die Kalkulation ist **Teil jeder Planversion** – sie hängt an den Vorgängen. Damit hat jeder Entwurf seine
-eigene Kalkulation, der Vergleich zeigt neben Terminen auch Mehr- oder Minderaufwand, und ein Entwurf mit
-zusätzlichem Umfang ist zugleich ein **Nachtrag (Change Request)**: Zustimmung des Kunden = Beauftragung.
+eigene Kalkulation, der Vergleich zeigt neben Terminen auch Mehr- oder Minderaufwand in Tagen, und ein Entwurf
+mit zusätzlichem Umfang ist zugleich ein **Nachtrag (Change Request)**: Zustimmung des Kunden = Beauftragung.
 
 ### Planaufwand
 
-- **Aufwand pro Vorgang und Rolle** in Personentagen (PT; intern Minuten wie in `pm.ts`, 1 PT = 8 h),
-  z. B. „Datenanalyse: Berater 3 PT, Technik 1 PT, Kunde 2 PT“.
-- **Rollen** mit Tagessatz in einer **Preisliste** (Admin): z. B. Projektleitung, Berater, Technischer
-  Berater/Entwickler, Trainer. Pro Projekt lassen sich Sätze überschreiben (Sonderkonditionen, Rabatt %).
-- **Kundenaufwand** ist eine eigene Rolle ohne Preis: Er wird geplant und gezeigt (der Kunde muss Leute
-  einplanen), aber nicht berechnet.
-- **Positionen ohne Vorgang**: Reisekosten (pauschal pro Vor-Ort-Tag oder fest), Projektmanagement als
-  Prozentaufschlag, Risikopuffer %, Festpreis-Positionen.
-- **Abrechnungsart pro Teilprojekt**: Festpreis oder nach Aufwand.
-- Summen auf jeder Ebene (Vorgang → Phase → Teilprojekt → Projekt) nach Rolle, in PT und €.
-- Verbindung zur Planung: Die Planungsautomatik „Dauer aus Aufwand“ aus shopping rechnet weiter mit dem
-  Aufwand der eingeteilten Personen; der Kundenaufwand zählt dabei nur, wenn Kundenpersonen eingeteilt sind.
+- **Tage pro Vorgang und Projektrolle** (in Vierteltagen; intern Minuten wie in `pm.ts`, 1 Tag = 8 h),
+  z. B. „Datenanalyse: Solution Architect 2, Consultant 3, Key User 2, IT-Interface 1“.
+- Kalkuliert wird mit den **Projektrollen** aus Abschnitt 7 – Slimstock- und Kundenrollen gleichermaßen. Der
+  Kunde sieht so, wie viele Tage seine Leute einplanen müssen.
+- Rollen ohne Aufwand (z. B. Sponsor) sind als „nicht kalkuliert“ markiert und erscheinen nicht als Spalte.
+- Summen auf jeder Ebene (Vorgang → Phase → Teilprojekt → Projekt) nach Rolle, getrennt nach
+  **Slimstock-Tagen** und **Kunden-Tagen**.
+- Verbindung zur Planung: Die Automatik „Dauer aus Aufwand“ aus shopping rechnet mit dem Aufwand der
+  eingeteilten Personen (Person mit passender Rolle am Vorgang).
+- **Abrechnungsart pro Teilprojekt**: *nach Aufwand* (Standard) oder *Festpreis* (siehe unten).
+
+### Festpreis – was das bedeuten könnte (Vorschlag)
+
+Da die App keine Euro kennt, wirkt sich Festpreis nur auf die Tage und die Kundensicht aus:
+
+1. **Budget wird festgeschrieben**: Beim Markieren als Festpreis (bzw. beim Annehmen der Version, in der das
+   passiert) werden die Slimstock-Tage des Teilprojekts als vereinbartes Budget gespeichert. Spätere
+   Planänderungen ändern dieses Budget nicht – nur ein angenommener Entwurf, der ausdrücklich als **Nachtrag**
+   gekennzeichnet ist.
+2. **Mehraufwand ist Slimstock-Risiko**: Prognose über Budget erscheint intern rot.
+3. **Kundensicht**: Bei Festpreis sieht der Kunde nur Fortschritt, Termine und seine eigenen Kunden-Tage –
+   keine Slimstock-Ist-Tage und keine Prognose.
+4. **Umfangsänderung**: Kommen in einem Entwurf Vorgänge in einem Festpreis-Teilprojekt dazu, fragt die App
+   beim Annehmen: „Nachtrag (Budget erhöhen) oder im Festpreis (Budget bleibt)?“
+
+Bei *nach Aufwand* folgt das Budget immer der Arbeitsversion, und der Kunde kann Ist und Prognose sehen
+(je nach Projekteinstellung). Datenmodell und Oberfläche sehen die Abrechnungsart vor; die Regeln oben
+setzen wir um, wenn du sie bestätigt hast.
 
 ### Ist und Prognose
 
-- **Geleisteter Aufwand** pro Vorgang und Rolle – im POC von Hand, später Import aus der Zeiterfassung (CSV).
-- **Restaufwand** pro Vorgang (Schätzung, Vorschlag = Plan − Ist).
-- **Prognose** = Ist + Rest, Abweichung zum Budget der Arbeitsversion in PT, € und %, mit Ampel ab
-  einstellbaren Schwellen. Das ist später die Budget-Ampel im Flash-Report.
-- **Verteilung über die Zeit**: Aus Plan-Terminen und Aufwand ergibt sich der Bedarf pro Monat und Rolle
-  (Auslastung, Umsatzvorschau).
+- **Ist-Tage von Hand**: Buchungen am Vorgang mit Datum, Person, Rolle, Tagen und Notiz. Die Summe ist das
+  Ist; über das Datum ergibt sich der Verlauf pro Monat. Buchungen hängen am Vorgang über dessen `key` und
+  gelten damit unabhängig von Versionen.
+- **Restaufwand** pro Vorgang und Rolle (Schätzung, Vorschlag = Plan − Ist).
+- **Prognose** = Ist + Rest, Abweichung zum Budget in Tagen und %, mit Ampel ab einstellbaren Schwellen. Das
+  ist später die Budget-Ampel im Flash-Report.
+- **Bedarf über die Zeit**: Aus Plan-Terminen und Aufwand ergibt sich der Bedarf pro Monat und Rolle
+  (Auslastung Slimstock, Belastung beim Kunden).
 
 ### Ansichten
 
-- **Kalkulationstabelle**: Baum Teilprojekt → Phase → Vorgang, Spalten je Rolle, Summe PT, Summe €; direkt
+- **Kalkulationstabelle**: Baum Teilprojekt → Phase → Vorgang, Spalten je Projektrolle, Summen; direkt
   bearbeitbar (in Entwürfen und der Arbeitsversion).
-- **Vergleich**: Entwurf gegen Arbeitsversion – Δ PT und Δ € pro Zeile und gesamt.
+- **Vergleich**: Entwurf gegen Arbeitsversion – Δ Tage pro Zeile, Rolle und gesamt.
 - **Budget**: Plan / Ist / Rest / Prognose je Teilprojekt und Rolle.
-- **Export** als Excel (Angebotsanlage, Nachtragsaufstellung).
+- **Export** als Excel (Aufwandsaufstellung, Nachtragsaufstellung) – in der Projektsprache.
 
 ### Was der Kunde sieht
 
-Pro Projekt einstellbar: *nichts* · *nur PT (inkl. Kundenaufwand)* · *PT und €*. Interne Positionen
-(Risikopuffer, Sätze) sind immer intern.
+Pro Projekt einstellbar: *nichts* · *nur Kunden-Tage* · *alle Tage (Plan)* · *alle Tage mit Ist und
+Prognose*. Für Festpreis-Teilprojekte gilt höchstens „alle Tage (Plan)“.
 
 ## 4. Projektdesign aus Vorlagen (später – jetzt nur angedacht)
 
@@ -156,9 +178,11 @@ Projektplan samt Kalkulation. Was der Kunde nicht gekauft hat, kommt gar nicht e
 ### Vorlagen und Bausteine
 
 - **Vorlage** (z. B. „Slim4-Einführung Standard“): eine Sammlung von **Bausteinen**, gepflegt von Admins.
+  Alle Texte einer Vorlage (Bausteine, Vorgänge, Tasks) werden **je Sprache** gepflegt; beim Erzeugen
+  kommen sie in der Projektsprache ins Projekt (fehlt eine Übersetzung: Englisch, dann Deutsch).
 - **Baustein = Teilprojekt** (z. B. Basis/Setup, Forecasting, Replenishment, Inventory Optimization,
   S&OP, ERP-Schnittstelle, Schulung, Go-live-Begleitung). Ein Baustein enthält Phasen, Vorgänge,
-  Meilensteine, Aufwand pro Rolle, Abhängigkeiten (auch zu anderen Bausteinen) und optional
+  Meilensteine, Tage pro Projektrolle, Abhängigkeiten (auch zu anderen Bausteinen) und optional
   Standard-Tasks (Checklisten).
 - **Auswahlregeln** pro Baustein: *Pflicht* · *Standard an* · *Standard aus*; „benötigt Baustein X“;
   „genau einer aus Gruppe“ (z. B. Schnittstelle SAP / Dynamics / Datei). Auch einzelne Vorgänge können
@@ -170,7 +194,7 @@ Projektplan samt Kalkulation. Was der Kunde nicht gekauft hat, kommt gar nicht e
 
 1. Kunde, Name, Start, Arbeitskalender.
 2. Vorlage wählen.
-3. Bausteine an- und abwählen, Mengentreiber eintragen – daneben laufend Summe PT/€ und voraussichtliches
+3. Bausteine an- und abwählen, Mengentreiber eintragen – daneben laufend Summe Tage je Rolle und voraussichtliches
    Projektende.
 4. Vorschau als Gantt.
 5. Erzeugen: Teilprojekte, Plan und Kalkulation entstehen als **erster Entwurf** (so kann man ihn direkt
@@ -226,28 +250,64 @@ Beides kommt nach dem POC. Hier festgehalten, damit das Datenmodell passt.
 Kalkulation (Prognose) und Tasks. Details klären wir, wenn es so weit ist. Das Datenmodell sieht Dokumente
 mit Typ vor, er passt also ohne Umbau dazu.
 
-## 7. Beteiligte und Rechte
+## 7. Beteiligte, Projektrollen und Rechte
 
-Beteiligte sind Personen mit einer **Rolle je Projekt**; in Teilprojekten kann eine Rolle ergänzt oder erhöht
-werden (nie gesenkt – vererbt wird von oben).
+Zwei Dinge werden getrennt:
 
-| Recht | Projektleitung (Slimstock) | Berater (Slimstock) | Projektleitung Kunde | Mitglied Kunde | Leser |
+- **Projektrolle** – was jemand im Projekt *tut*. Grundlage für Kalkulation, Zuständigkeiten und die
+  Beteiligtenliste. Eine Person kann **mehrere Projektrollen** haben.
+- **Berechtigung** – was jemand in der App *darf*. Ergibt sich aus den Projektrollen, lässt sich pro Person
+  überschreiben.
+
+### Projektrollen
+
+| Slimstock | Kunde |
+| --- | --- |
+| Projektleiter | Projektleiter |
+| Solution Architect | Projektmanager |
+| Technical Consultant | Key User |
+| Consultant | User |
+| Trainer | IT-Infrastructure |
+| Sponsor | IT-Interface |
+| | IT-Interface-Partner |
+| | Sponsor |
+
+- Die Liste ist **erweiterbar**: Admins legen Rollen an, benennen um, sortieren, deaktivieren (gelöscht wird
+  nichts, was schon benutzt wurde). Jede Rolle hat Namen je Sprache, eine Seite (Slimstock/Kunde), „wird
+  kalkuliert“ ja/nein und eine Standard-Berechtigung.
+- Pro Person im Projekt beliebig viele Rollen; in Teilprojekten ergänzbar (z. B. Consultant nur im
+  Teilprojekt Schulung).
+- Die Kalkulation plant gegen **Rollen**, die Einsatzplanung gegen **Personen** mit dieser Rolle.
+- IT-Interface-Partner (z. B. der ERP-Dienstleister des Kunden) kommt wie Kundenpersonen über den
+  persönlichen Link.
+
+### Berechtigungen
+
+Fünf Stufen. Die wirksame Stufe ist die höchste aus den Rollen der Person, pro Person überschreibbar.
+
+| Stufe | Standard für Rollen (Vorschlag) |
+| --- | --- |
+| Projektleitung Slimstock | Projektleiter (Slimstock) |
+| Team Slimstock | Solution Architect, Technical Consultant, Consultant, Trainer, Sponsor (Slimstock) |
+| Projektleitung Kunde | Projektleiter, Projektmanager, Sponsor (Kunde) |
+| Team Kunde | Key User, IT-Infrastructure, IT-Interface, IT-Interface-Partner |
+| Leser | User |
+
+| Recht | PL Slimstock | Team Slimstock | PL Kunde | Team Kunde | Leser |
 | --- | :-: | :-: | :-: | :-: | :-: |
 | Interne Inhalte sehen | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Arbeitsversion und Entwürfe bearbeiten | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Entwurf anlegen | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Arbeitsversion und Entwürfe bearbeiten, Entwurf anlegen | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Entwurf zur Abstimmung geben, annehmen; Sichtbarkeit für Kunden | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Freigegebene Versionen sehen und kommentieren | ✅ | ✅ | ✅ | ✅ | sehen |
+| Für Kunden sichtbare Versionen sehen und kommentieren | ✅ | ✅ | ✅ | ✅ | sehen |
 | Entwurf zustimmen / ablehnen | – | – | ✅ | ❌ | ❌ |
-| Kalkulation bearbeiten (in Arbeitsversion/Entwürfen) | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Ist-Aufwand erfassen | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Kalkulation bearbeiten, Ist-Tage buchen | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Kalkulation sehen | ✅ | ✅ | je Projekteinstellung | je Projekteinstellung | ❌ |
 | Tasks anlegen / bearbeiten | ✅ | ✅ | ✅ | eigene | ❌ |
-| Protokoll schreiben, veröffentlichen | ✅ | ✅ | kommentieren | ❌ | ❌ |
-| Beteiligte einladen, Rollen ändern | ✅ | ❌ | Kunden-Mitglieder | ❌ | ❌ |
+| Beteiligte einladen, Rollen ändern | ✅ | ❌ | Kundenseite | ❌ | ❌ |
+| Projekteinstellungen (Sprache, Kundensicht) | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-- **Admins** (Slimstock) legen Projekte und Slimstock-Benutzer an, pflegen Preisliste und (später) Vorlagen
-  und sehen alles.
+- **Admins** (Slimstock) legen Projekte und Slimstock-Benutzer an, pflegen die Rollenliste und (später)
+  Vorlagen und sehen alles.
 - Alle Rechte prüft der Server; die Oberfläche blendet nur aus.
 - Änderungsprotokoll pro Projekt (wer hat wann was geändert).
 
@@ -282,7 +342,32 @@ werden (nie gesenkt – vererbt wird von oben).
 - Versand: Die App zeigt den Link zum Kopieren/Teilen. Mailversand per SMTP ist optional (`SMTP_*` in der
   Env); ohne SMTP wird einfach kopiert.
 
-## 9. Technik
+## 9. Mehrsprachigkeit
+
+Von Anfang an mehrsprachig: zum Start **Deutsch und Englisch**, vorbereitet für **Niederländisch und
+Spanisch**, weitere Sprachen nur durch eine neue Sprachdatei.
+
+- **Projektsprache** – je Projekt einstellbar. Sie ist die Standardsprache der Oberfläche für alle
+  Beteiligten dieses Projekts und die Sprache von Einladungen, Mails, Exporten (Excel, später PDF) und der
+  Texte, die aus Vorlagen ins Projekt kommen.
+- **Spontan umschalten** – jeder kann über das Sprachmenü in der Kopfzeile jederzeit umschalten; das wirkt
+  sofort. Die Wahl bleibt gemerkt (Slimstock-Benutzer im Profil, Kunden pro Link) und lässt sich mit
+  „Projektsprache verwenden“ wieder zurücksetzen.
+- Reihenfolge: eigene Wahl → Projektsprache → Browsersprache → Englisch. Außerhalb eines Projekts
+  (Login, Projektliste) gilt eigene Wahl → Browsersprache.
+- **Übersetzt wird** alles, was die App mitbringt: Oberfläche, Fehlermeldungen, Mails, Systembegriffe
+  (Projektrollen, Standard-Status, Abhängigkeitstypen, Berechtigungsstufen) sowie Datums- und Zahlenformate
+  (`16.11.2026` / `16/11/2026`, `1.234,5` / `1,234.5`, Wochenbeginn).
+- **Nicht übersetzt** werden Inhalte, die Menschen schreiben (Vorgänge, Tasks, Kommentare) – sie bleiben in
+  der Sprache, in der sie geschrieben wurden. Später denkbar: Übersetzung auf Knopfdruck.
+- Vorlagen pflegen ihre Texte je Sprache (Abschnitt 4).
+
+Technik: `i18next` mit `react-i18next` im Browser, dieselben Sprachdateien (JSON, eine pro Sprache, in
+`packages/shared/locales`) im Server für Mails und Exporte. Schlüssel englisch, keine Texte hart im Code.
+Ein Test in der CI prüft, dass Deutsch und Englisch vollständig sind; fehlende Schlüssel in NL/ES fallen
+auf Englisch zurück. Formatierung über `Intl`.
+
+## 10. Technik
 
 **Stack der Shopping-App, aber ohne Offline-Sync.**
 
@@ -292,6 +377,7 @@ werden (nie gesenkt – vererbt wird von oben).
 | Datenbank | PostgreSQL 17 + Drizzle | Versionen, Rechte, Historie – relationale Daten |
 | Frontend | React + Vite, PWA | Gantt, Tabelle, Kanban aus shopping wiederverwendbar |
 | Geteilt | `packages/shared`: Zod-Schemas, **`pm.ts` aus shopping**, Versionsvergleich | eine Rechnung in Browser und Server |
+| Sprachen | `i18next` + `react-i18next`, `Intl` | Sprachdateien für Browser und Server gemeinsam |
 | Echtzeit | WebSocket: „Projekt X hat sich geändert“ → neu laden | einfach; kein HLC/Feld-Sync nötig |
 | Passwörter | Argon2id (`@node-rs/argon2`) | |
 | PDF | Headless-Chromium oder `pdfmake` | Protokoll im Slimstock-CD (später) |
@@ -313,38 +399,41 @@ hinausgeht.
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | erster Admin beim ersten Start |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | optionaler Mailversand |
 | `TRUSTED_PROXY` | `X-Forwarded-*` nur hinter Reverse Proxy vertrauen |
+| `DEFAULT_LANGUAGE` | Sprache für neue Projekte und die Anmeldeseite (`de` oder `en`) |
 | `TZ` | `Europe/Berlin` |
 
 Sonst wie üblich: Image `ghcr.io/doenke/slimstock-project`, Healthcheck `/healthz` (prüft DB),
-`compose.example.yml` mit Postgres, Versionierung x.yy.zzz, README im bekannten Stil, deutsche Oberfläche,
-englischer Code. Für den Umzug zu Slimstock: Image + Datenbank-Dump, keine weiteren Abhängigkeiten.
+`compose.example.yml` mit Postgres, Versionierung x.yy.zzz, README im bekannten Stil (deutsch), mehrsprachige
+Oberfläche, englischer Code. Für den Umzug zu Slimstock: Image + Datenbank-Dump, keine weiteren Abhängigkeiten.
 
 ### Datenmodell (Skizze)
 
 ```
-users            id, kind (staff|customer), username?, password_hash?, email, name, is_admin, last_seen_at
+users            id, kind (staff|customer), username?, password_hash?, email, name, is_admin, language?,
+                 last_seen_at
 customers        id, name
-projects         id, customer_id, parent_id?, name, code, calendar, settings, origin?
-memberships      project_id, user_id, role, invited_by, created_at,
-                 link_token_hash?, link_token_enc?, link_rotated_at, link_last_used_at
+projects         id, customer_id, parent_id?, name, code, language, calendar, settings
+                 (customer_effort_view, …), origin?
+project_roles    id, side (slimstock|customer), names (jsonb je Sprache), calculated, default_permission,
+                 sort, active
+memberships      id, project_id, user_id, permission_override?, invited_by, created_at,
+                 link_token_hash?, link_token_enc?, link_rotated_at, link_last_used_at, link_language?
+member_roles     membership_id, role_id, subproject_id?
 plan_versions    id, project_id, kind (working|draft|history), name, description,
                  status (editing|in_review|accepted|rejected|discarded),
-                 based_on_version_id, based_on_snapshot_at, customer_visible,
+                 based_on_version_id, based_on_snapshot_at, customer_visible, is_change_request,
                  created_by, accepted_by, accepted_at, replaced_at
 version_reviews  version_id, user_id, verdict (approve|reject), comment, at
 plan_items       id, version_id, key, parent_key?, subproject_id?, title, pm (jsonb wie shopping),
                  progress, actual_start, actual_end, owner_user_id?, internal, sort, rev, origin?
-item_efforts     plan_item_id, role_id, planned, spent, remaining          (Minuten)
-roles            id, name, is_customer, sort
-rate_cards       role_id, day_rate, valid_from                              (Preisliste)
-project_rates    project_id, role_id, day_rate?, discount_pct?
-cost_lines       id, version_id, subproject_id?, kind (travel|pm_surcharge|risk|fixed), amount|pct, internal
-subproject_terms version_id, subproject_id, billing (fixed|tm), fixed_price?
+item_efforts     plan_item_id, role_id, planned, remaining                  (Minuten)
+effort_entries   id, project_id, item_key, user_id, role_id, date, minutes, note   (Ist, versionsunabhängig)
+subproject_terms version_id, subproject_id, billing (tm|fixed), fixed_budget?
 
-templates        id, name                                                   (später: Projektdesign)
+templates        id, names (jsonb je Sprache)                               (später: Projektdesign)
 template_versions id, template_id, no, published_at
-template_modules id, template_version_id, name, rule (required|default_on|default_off), group?, requires[]
-template_items   id, module_id, key, parent_key?, title, pm, efforts, optional, per_param?
+template_modules id, template_version_id, names, rule (required|default_on|default_off), group?, requires[]
+template_items   id, module_id, key, parent_key?, titles, pm, efforts, optional, per_param?
 template_params  id, template_version_id, name, unit, default
 tasks            id, project_id, plan_item_key?, title, status, due, assignees[], priority, internal,
                  source_doc_id?, rev
@@ -356,16 +445,17 @@ sessions, audit_log
 
 „Genau eine Arbeitsversion“: partieller Unique-Index auf `plan_versions(project_id) WHERE kind = 'working'`.
 Annehmen ist eine Transaktion: alte Arbeitsversion → `history`, Entwurf → `working`, Fortschritt, Ist und
-Rest aus der alten Arbeitsversion übernehmen. Ist-Aufwand hängt am Vorgang über `key` und wandert so mit.
+Rest aus der alten Arbeitsversion übernehmen. Ist-Buchungen hängen am Vorgang über `key` und gelten so
+für jede Version.
 
-## 10. Ausbaustufen
+## 11. Ausbaustufen
 
 | Stufe | Inhalt |
 | --- | --- |
-| **1 – Gerüst** | Repo, Docker + Postgres, Healthcheck, Versionierung, Login mit Benutzername/Passwort, Benutzerverwaltung, Projekte + Teilprojekte, Beteiligte mit Rollen |
+| **1 – Gerüst** | Repo, Docker + Postgres, Healthcheck, Versionierung, Mehrsprachigkeit (de/en) von Anfang an, Login mit Benutzername/Passwort, Benutzerverwaltung, Projektrollen (erweiterbar), Projekte + Teilprojekte, Beteiligte mit Rollen und Berechtigungen |
 | **2 – Plan** | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
 | **3 – Entwürfe** | Entwürfe anlegen/bearbeiten/verwerfen, Vergleich (Gantt + Tabelle), Annehmen mit Übernahme der Ist-Daten, Historie |
-| **4 – Kalkulation** | Rollen und Preisliste, Aufwand pro Vorgang und Rolle, Zusatzpositionen, Summen, Vergleich Δ PT/€, Ist/Rest/Prognose, Excel-Export |
+| **4 – Kalkulation** | Tage pro Vorgang und Projektrolle, Summen, Vergleich Δ Tage, Ist-Buchungen von Hand, Rest/Prognose, Abrechnungsart (Festpreis-Regeln nach Bestätigung), Excel-Export |
 | **5 – Kunden** | Persönliche Links pro Projekt, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |
 | **6 – Taskliste** | Tasks mit Tabelle/Kanban, Verknüpfung zum Plan, „Meine Aufgaben“ |
 | **7 – Feinschliff** | Änderungsprotokoll, Mail-Benachrichtigungen (neuer Entwurf zur Abstimmung, Task zugewiesen) |
@@ -376,11 +466,11 @@ Stufen 1–7 sind der POC auf garageband.
 1. **Projektdesign aus Vorlagen** (Abschnitt 4): Vorlagen und Bausteine pflegen, Assistent, Mengentreiber,
    Baustein nachträglich als Nachtrag.
 2. **Meeting-Protokolle** und **Flash-Report** (Abschnitt 6), PDF-Export im Slimstock-Design.
-3. Firmenlogin per OIDC, Umzug zu Slimstock.
+3. Firmenlogin per OIDC, Umzug zu Slimstock, Sprachen Niederländisch und Spanisch.
 4. Import/Export MS Project (XML), Import Ist-Aufwand aus der Zeiterfassung, Projektportfolio über alle
    Kunden, MCP-Schnittstelle wie in shopping.
 
-## 11. Entschieden
+## 12. Entschieden
 
 - Entwürfe beliebig viele; ein angenommener Entwurf wird zur Arbeitsversion.
 - Die Slimstock-Projektleitung darf Entwürfe auch ohne Kunden-Zustimmung annehmen.
@@ -392,13 +482,17 @@ Stufen 1–7 sind der POC auf garageband.
 - POC auf garageband, Adresse per Docker-Env; danach Umzug zu Slimstock.
 - Rechenkern und Gantt aus shopping werden kopiert und hier weiterentwickelt.
 - Meeting-Protokolle und Flash-Report nach dem POC.
+- Kalkulation nur in Tagen pro Projektrolle und Projektschritt, keine Euro; Ist-Tage von Hand.
+- Projektrollen Slimstock und Kunde wie in Abschnitt 7, erweiterbar, mehrere Rollen pro Person.
+- Festpreis ist eine Option pro Teilprojekt; die Regeln dazu sind noch Vorschlag.
+- Mehrsprachig: Deutsch und Englisch zum Start, Projektsprache je Projekt, spontan umschaltbar.
 
-## 12. Offene Fragen
+## 13. Offene Fragen
 
-1. **Rollen und Tagessätze**: Welche Rollen kalkuliert ihr (z. B. Projektleitung, Berater, Technik,
-   Trainer)? Gibt es eine Slimstock-Preisliste, die ich als Beispiel nehmen kann (gern mit Fantasiezahlen)?
-2. **Kunde und Kalkulation**: Was soll der Kunde standardmäßig sehen – nichts, nur PT oder PT und €?
-3. **Abrechnung**: Gibt es Festpreis-Teilprojekte, oder läuft alles nach Aufwand?
-4. **Ist-Aufwand**: Reicht im POC die Eingabe von Hand? Woher kämen die Zeiten später (Tool, Export-Format)?
-5. **Vorlagen** (für später): Gibt es heute schon eine Standard-Projektvorlage (Excel/MS Project) mit den
-   Slim4-Modulen? Die wäre die beste Grundlage für die Bausteine.
+1. **Festpreis**: Passen die vier Regeln in Abschnitt 3 (Budget festschreiben, Mehraufwand intern rot,
+   eingeschränkte Kundensicht, Nachfrage „Nachtrag oder im Festpreis?“)?
+2. **Berechtigungen aus Rollen**: Passt die Zuordnung in Abschnitt 7 – insbesondere Sponsor (Kunde) als
+   Projektleitung Kunde (darf also Entwürfen zustimmen) und User nur als Leser?
+3. **Kundensicht auf die Kalkulation**: Welche der vier Stufen soll Standard sein? Vorschlag: „alle Tage
+   (Plan)“.
+4. **Vorlagen**: kommen Ende der Woche von dir.
