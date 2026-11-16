@@ -1,6 +1,6 @@
 # Slimstock Projektmanagement – Plan
 
-Stand: 16.11.2026 · Stufe 1 umgesetzt (Gerüst, Login, Projektrollen, Projekte, Beteiligte, Deutsch/Englisch).
+Stand: 16.11.2026 · Stufen 1 und 2 umgesetzt (Gerüst, Login, Projektrollen, Projekte, Beteiligte, Deutsch/Englisch, Projektplan mit Tabelle und Gantt).
 
 Eine Browser-App (PWA), in der Slimstock-Berater ihre Kundenprojekte führen und das Projektmanagement mit dem
 Kunden teilen: Projektplan mit Arbeitsversion und Entwürfen, Aufwandskalkulation, Taskliste, Beteiligte mit
@@ -454,7 +454,7 @@ für jede Version.
 | Stufe | Inhalt |
 | --- | --- |
 | **1 – Gerüst** ✅ | Repo, Docker + Postgres, Healthcheck, Versionierung, Mehrsprachigkeit (de/en) von Anfang an, Login mit Benutzername/Passwort, Benutzerverwaltung, Projektrollen (erweiterbar), Projekte + Teilprojekte, Beteiligte mit Rollen und Berechtigungen |
-| **2 – Plan** | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
+| **2 – Plan** ✅ | `pm.ts` und Gantt aus shopping übernehmen, Vorgänge mit Hierarchie, Tabelle + Gantt, Arbeitsversion |
 | **3 – Entwürfe** | Entwürfe anlegen/bearbeiten/verwerfen, Vergleich (Gantt + Tabelle), Annehmen mit Übernahme der Ist-Daten, Historie |
 | **4 – Kalkulation** | Tage pro Vorgang und Projektrolle, Summen, Vergleich Δ Tage, Ist-Buchungen von Hand, Rest/Prognose, Abrechnungsart mit Festpreis-Budget, Excel-Export |
 | **5 – Kunden** | Persönliche Links pro Projekt, Kundensicht, Sichtbarkeit pro Version, Abstimmung (zustimmen/ablehnen, Kommentare), Rechteprüfung mit Tests |

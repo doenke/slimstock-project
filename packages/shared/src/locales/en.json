@@ -1,5 +1,8 @@
 {
-  "app": { "name": "Slimstock Project Management", "version": "Version {{version}}" },
+  "app": {
+    "name": "Slimstock Project Management",
+    "version": "Version {{version}}"
+  },
   "nav": {
     "projects": "Projects",
     "admin": "Administration",
@@ -7,7 +10,10 @@
     "profile": "Profile and password",
     "logout": "Log out"
   },
-  "language": { "label": "Language", "project": "Project language ({{language}})" },
+  "language": {
+    "label": "Language",
+    "project": "Project language ({{language}})"
+  },
   "common": {
     "close": "Close",
     "loading": "Loading …",
@@ -43,7 +49,15 @@
     "unknown_user": "This person does not exist (any more).",
     "unknown_customer": "This customer does not exist.",
     "customer_required": "Please choose a customer.",
-    "already_member": "This person is already on the project."
+    "already_member": "This person is already on the project.",
+    "plan_not_shared": "The project plan has not been shared with you yet.",
+    "conflict": "Someone changed this in the meantime – the plan has been reloaded.",
+    "version_locked": "This version can no longer be changed.",
+    "dependency_cycle": "This link would create a circle.",
+    "dependency_type": "Phases can only be linked “after end”.",
+    "unknown_item": "This task does not exist (any more).",
+    "unknown_subproject": "This subproject does not exist (any more).",
+    "assignee_not_member": "Only people on the project can be assigned."
   },
   "permission": {
     "reader": "Reader",
@@ -52,8 +66,17 @@
     "team_slimstock": "Slimstock team",
     "pl_slimstock": "Slimstock project lead"
   },
-  "side": { "slimstock": "Slimstock", "customer": "Customer" },
-  "status": { "planned": "Planned", "active": "Running", "on_hold": "On hold", "done": "Completed", "archived": "Archived" },
+  "side": {
+    "slimstock": "Slimstock",
+    "customer": "Customer"
+  },
+  "status": {
+    "planned": "Planned",
+    "active": "Running",
+    "on_hold": "On hold",
+    "done": "Completed",
+    "archived": "Archived"
+  },
   "login": {
     "intro": "Log in with your Slimstock account.",
     "username": "User name",
@@ -72,7 +95,11 @@
     "firstIntro": "You logged in with a start password. Please set your own password now.",
     "changed": "Password changed. You have to log in again on other devices."
   },
-  "profile": { "title": "Profile", "name": "Name", "email": "E-mail" },
+  "profile": {
+    "title": "Profile",
+    "name": "Name",
+    "email": "E-mail"
+  },
   "projects": {
     "title": "Projects",
     "new": "New project",
@@ -107,9 +134,11 @@
     "subprojectCount_one": "{{count}} subproject",
     "subprojectCount_other": "{{count}} subprojects",
     "planTitle": "Project plan",
-    "planSoon": "The project plan with working version, drafts and effort estimation will live here.",
     "edit": "Edit project",
-    "status": "Status"
+    "status": "Status",
+    "plan": "Project plan",
+    "openPlan": "Open project plan",
+    "planEmpty": "No tasks in the plan yet."
   },
   "members": {
     "add": "Add",
@@ -168,5 +197,95 @@
     "customersIntro": "Customers with running projects.",
     "newCustomer": "New customer",
     "noCustomers": "No customers yet. They are also created together with a project."
+  },
+  "plan": {
+    "days_one": "{{value}} day",
+    "days_other": "{{value}} days",
+    "col": {
+      "name": "Task",
+      "duration": "Duration",
+      "start": "Start",
+      "end": "End",
+      "progress": "Progress",
+      "predecessors": "Predecessors",
+      "who": "Who",
+      "float": "Float"
+    },
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "milestone": "Milestone",
+    "internal": "internal",
+    "internalLabel": "Internal – the customer does not see this task",
+    "empty": "No tasks yet. Add the first one above.",
+    "weekShort": "W{{n}}",
+    "today": "Today",
+    "todayWord": "today",
+    "critical": "critical path",
+    "deadline": "Deadline",
+    "conflict": {
+      "start": "The fixed start lies before the predecessors end.",
+      "end": "The fixed end does not fit the predecessors.",
+      "deadline": "The planned end lies after the deadline.",
+      "cycle": "The links form a circle.",
+      "resource": "Someone is booked twice at the same time."
+    },
+    "subprojectRow": "Subproject – period and progress follow from its tasks.",
+    "openSubproject": "Open subproject",
+    "phaseHint": "Phase – period and progress follow from the tasks inside. Links of a phase apply to all its tasks.",
+    "notBefore": "Not before",
+    "calcHint": "Grey = calculated. What you enter is a constraint; ↺ calculates again.",
+    "progressTitle": "Status",
+    "actualStart": "Actual start",
+    "actualEnd": "Actual end",
+    "early": "Earliest period",
+    "late": "Latest period",
+    "waitsFor": "Waits for",
+    "noTasksInside": "No tasks inside yet.",
+    "reset": "Reset (calculate again)",
+    "dep": {
+      "FS": "after end",
+      "SS": "same start",
+      "FF": "same end",
+      "SF": "end after start"
+    },
+    "linkType": "Link type",
+    "lag": "Lag in days",
+    "lagHint": "Lag in working days, negative = overlap",
+    "removeLink": "Remove link",
+    "addPredecessor": "Add predecessor",
+    "noPredecessors": "No predecessors.",
+    "successors": "Successors",
+    "newMilestone": "Milestone",
+    "confirmDelete": "Delete “{{title}}”?",
+    "confirmDeletePhase_one": "Delete “{{title}}” with {{count}} task inside?",
+    "confirmDeletePhase_other": "Delete “{{title}}” with {{count}} tasks inside?",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "outdent": "Outdent (out of the phase)",
+    "indent": "Indent (into the row above)",
+    "delete": "Delete",
+    "view": "View",
+    "mode": {
+      "gantt": "Gantt",
+      "table": "Table"
+    },
+    "zoom": "Time scale",
+    "zoomLevel": {
+      "day": "Days",
+      "week": "Weeks"
+    },
+    "wholePlan": "Show the whole project plan",
+    "settings": "Plan settings",
+    "addPlaceholder": "New task, e.g. “Data analysis”",
+    "addTask": "Task",
+    "addMilestone": "Milestone",
+    "addHint": "New tasks go after the selected row – at the end of a selected phase or subproject. ⇥ makes a task part of the row above (that is how phases are made).",
+    "legend": "Red = critical path, dashed = deadline. Click shows the details.",
+    "legendEdit": "Drag a bar to move its start, its right edge to change the duration. Red = critical path, dashed = deadline.",
+    "workDays": "Working days",
+    "planStart": "Plan start",
+    "planStartHint": "Empty = project start ({{date}}).",
+    "levelLabel": "Resource levelling",
+    "levelHint": "Everyone does their tasks one after the other; where they overlap, the one with the least float goes first."
   }
 }

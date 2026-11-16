@@ -1,7 +1,19 @@
 {
-  "app": { "name": "Slimstock Projektmanagement", "version": "Version {{version}}" },
-  "nav": { "projects": "Projekte", "admin": "Verwaltung", "account": "Konto", "profile": "Profil und Passwort", "logout": "Abmelden" },
-  "language": { "label": "Sprache", "project": "Projektsprache ({{language}})" },
+  "app": {
+    "name": "Slimstock Projektmanagement",
+    "version": "Version {{version}}"
+  },
+  "nav": {
+    "projects": "Projekte",
+    "admin": "Verwaltung",
+    "account": "Konto",
+    "profile": "Profil und Passwort",
+    "logout": "Abmelden"
+  },
+  "language": {
+    "label": "Sprache",
+    "project": "Projektsprache ({{language}})"
+  },
   "common": {
     "close": "Schließen",
     "loading": "Wird geladen …",
@@ -37,7 +49,15 @@
     "unknown_user": "Diese Person gibt es nicht (mehr).",
     "unknown_customer": "Diesen Kunden gibt es nicht.",
     "customer_required": "Bitte wähle einen Kunden.",
-    "already_member": "Diese Person ist schon dabei."
+    "already_member": "Diese Person ist schon dabei.",
+    "plan_not_shared": "Der Projektplan ist noch nicht für dich freigegeben.",
+    "conflict": "Jemand hat das inzwischen geändert – der Plan ist neu geladen.",
+    "version_locked": "Diese Version kann nicht mehr geändert werden.",
+    "dependency_cycle": "Diese Verknüpfung würde einen Kreis ergeben.",
+    "dependency_type": "Phasen lassen sich nur „nach Ende“ verknüpfen.",
+    "unknown_item": "Diesen Vorgang gibt es nicht (mehr).",
+    "unknown_subproject": "Dieses Teilprojekt gibt es nicht (mehr).",
+    "assignee_not_member": "Nur Beteiligte des Projekts können eingeplant werden."
   },
   "permission": {
     "reader": "Leser",
@@ -46,8 +66,17 @@
     "team_slimstock": "Team Slimstock",
     "pl_slimstock": "Projektleitung Slimstock"
   },
-  "side": { "slimstock": "Slimstock", "customer": "Kunde" },
-  "status": { "planned": "Geplant", "active": "Läuft", "on_hold": "Pausiert", "done": "Abgeschlossen", "archived": "Archiviert" },
+  "side": {
+    "slimstock": "Slimstock",
+    "customer": "Kunde"
+  },
+  "status": {
+    "planned": "Geplant",
+    "active": "Läuft",
+    "on_hold": "Pausiert",
+    "done": "Abgeschlossen",
+    "archived": "Archiviert"
+  },
   "login": {
     "intro": "Melde dich mit deinem Slimstock-Zugang an.",
     "username": "Benutzername",
@@ -66,7 +95,11 @@
     "firstIntro": "Du meldest dich mit einem Startpasswort an. Bitte lege jetzt dein eigenes Passwort fest.",
     "changed": "Passwort geändert. Auf anderen Geräten musst du dich neu anmelden."
   },
-  "profile": { "title": "Profil", "name": "Name", "email": "E-Mail" },
+  "profile": {
+    "title": "Profil",
+    "name": "Name",
+    "email": "E-Mail"
+  },
   "projects": {
     "title": "Projekte",
     "new": "Neues Projekt",
@@ -101,9 +134,11 @@
     "subprojectCount_one": "{{count}} Teilprojekt",
     "subprojectCount_other": "{{count}} Teilprojekte",
     "planTitle": "Projektplan",
-    "planSoon": "Hier entsteht der Projektplan mit Arbeitsversion, Entwürfen und Aufwandskalkulation.",
     "edit": "Projekt bearbeiten",
-    "status": "Status"
+    "status": "Status",
+    "plan": "Projektplan",
+    "openPlan": "Zum Projektplan",
+    "planEmpty": "Noch keine Vorgänge im Plan."
   },
   "members": {
     "add": "Hinzufügen",
@@ -162,5 +197,95 @@
     "customersIntro": "Kunden, für die Projekte laufen.",
     "newCustomer": "Neuer Kunde",
     "noCustomers": "Noch keine Kunden. Sie entstehen auch beim Anlegen eines Projekts."
+  },
+  "plan": {
+    "days_one": "{{value}} Tag",
+    "days_other": "{{value}} Tage",
+    "col": {
+      "name": "Vorgang",
+      "duration": "Dauer",
+      "start": "Start",
+      "end": "Ende",
+      "progress": "Fortschritt",
+      "predecessors": "Vorgänger",
+      "who": "Wer",
+      "float": "Puffer"
+    },
+    "expand": "Aufklappen",
+    "collapse": "Zuklappen",
+    "milestone": "Meilenstein",
+    "internal": "intern",
+    "internalLabel": "Intern – der Kunde sieht diesen Vorgang nicht",
+    "empty": "Noch keine Vorgänge. Leg oben den ersten an.",
+    "weekShort": "KW {{n}}",
+    "today": "Heute",
+    "todayWord": "heute",
+    "critical": "kritischer Pfad",
+    "deadline": "Deadline",
+    "conflict": {
+      "start": "Der feste Start liegt vor dem Ende der Vorgänger.",
+      "end": "Das feste Ende passt nicht zu den Vorgängern.",
+      "deadline": "Das geplante Ende liegt nach der Deadline.",
+      "cycle": "Die Verknüpfungen bilden einen Kreis.",
+      "resource": "Eine Person ist zur selben Zeit doppelt eingeplant."
+    },
+    "subprojectRow": "Teilprojekt – Zeitraum und Fortschritt ergeben sich aus seinen Vorgängen.",
+    "openSubproject": "Teilprojekt öffnen",
+    "phaseHint": "Phase – Zeitraum und Fortschritt ergeben sich aus den Vorgängen darin. Verknüpfungen einer Phase gelten für alle ihre Vorgänge.",
+    "notBefore": "Nicht vor",
+    "calcHint": "Grau = berechnet. Was du einträgst, ist eine Vorgabe; ↺ rechnet wieder.",
+    "progressTitle": "Stand",
+    "actualStart": "Ist-Start",
+    "actualEnd": "Ist-Ende",
+    "early": "Frühester Zeitraum",
+    "late": "Spätester Zeitraum",
+    "waitsFor": "Wartet auf",
+    "noTasksInside": "Noch keine Vorgänge darin.",
+    "reset": "Zurücksetzen (wieder berechnen)",
+    "dep": {
+      "FS": "nach Ende",
+      "SS": "gleicher Start",
+      "FF": "gleiches Ende",
+      "SF": "Ende nach Start"
+    },
+    "linkType": "Art der Verknüpfung",
+    "lag": "Abstand in Tagen",
+    "lagHint": "Abstand in Arbeitstagen, negativ = Überlappung",
+    "removeLink": "Verknüpfung entfernen",
+    "addPredecessor": "Vorgänger hinzufügen",
+    "noPredecessors": "Keine Vorgänger.",
+    "successors": "Nachfolger",
+    "newMilestone": "Meilenstein",
+    "confirmDelete": "„{{title}}“ löschen?",
+    "confirmDeletePhase_one": "„{{title}}“ mit {{count}} Vorgang darin löschen?",
+    "confirmDeletePhase_other": "„{{title}}“ mit {{count}} Vorgängen darin löschen?",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "outdent": "Ausrücken (aus der Phase heraus)",
+    "indent": "Einrücken (in die Zeile darüber)",
+    "delete": "Löschen",
+    "view": "Ansicht",
+    "mode": {
+      "gantt": "Gantt",
+      "table": "Tabelle"
+    },
+    "zoom": "Zeitachse",
+    "zoomLevel": {
+      "day": "Tage",
+      "week": "Wochen"
+    },
+    "wholePlan": "Ganzen Projektplan zeigen",
+    "settings": "Planeinstellungen",
+    "addPlaceholder": "Neuer Vorgang, z. B. „Datenanalyse“",
+    "addTask": "Vorgang",
+    "addMilestone": "Meilenstein",
+    "addHint": "Neue Vorgänge landen hinter der gewählten Zeile – in einer gewählten Phase oder einem Teilprojekt am Ende. Mit ⇥ wird ein Vorgang Teil der Zeile darüber (so entstehen Phasen).",
+    "legend": "Rot = kritischer Pfad, gestrichelt = Deadline. Klick zeigt die Details.",
+    "legendEdit": "Balken ziehen verschiebt den Start, der rechte Rand die Dauer. Rot = kritischer Pfad, gestrichelt = Deadline.",
+    "workDays": "Arbeitstage",
+    "planStart": "Planbeginn",
+    "planStartHint": "Leer = Projektbeginn ({{date}}).",
+    "levelLabel": "Ressourcenabgleich",
+    "levelHint": "Jede Person erledigt ihre Vorgänge nacheinander; überschneiden sie sich, geht der mit dem wenigsten Puffer vor."
   }
 }

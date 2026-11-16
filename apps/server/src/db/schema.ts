@@ -1,6 +1,7 @@
-import type { Language, LocalizedText, PermissionLevel, ProjectStatus, Side } from '@spm/shared';
+import type { Language, LocalizedText, PermissionLevel, PlanPm, ProjectStatus, Side } from '@spm/shared';
+import { sql } from 'drizzle-orm';
 
-import { boolean, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, doublePrecision, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 const id = () => uuid('id').primaryKey().defaultRandom();
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -63,6 +64,8 @@ export const projects = pgTable(
     startDate: date('start_date'),
     endDate: date('end_date'),
     sort: integer('sort').notNull().default(0),
+    /** Plan settings of a top-level project (working days, plan start, levelling). */
+    settings: jsonb('settings').$type<Record<string, unknown>>().notNull().default({}),
     /** Later: where the project came from (template, version, modules). */
     origin: jsonb('origin'),
     createdBy: uuid('created_by').references(() => users.id),
@@ -112,4 +115,65 @@ export const memberRoles = pgTable(
       .references(() => projectRoles.id),
   },
   (t) => [uniqueIndex('member_roles_pk').on(t.membershipId, t.roleId)],
+);
+
+/**
+ * Versions of a project's plan (one plan per top-level project). Exactly one is the working version;
+ * drafts and history follow in stage 3.
+ */
+export const planVersions = pgTable(
+  'plan_versions',
+  {
+    id: id(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    kind: text('kind').$type<'working' | 'draft' | 'history'>().notNull(),
+    status: text('status').$type<'editing' | 'in_review' | 'accepted' | 'rejected' | 'discarded'>().notNull().default('editing'),
+    name: text('name').notNull().default(''),
+    description: text('description'),
+    basedOnVersionId: uuid('based_on_version_id'),
+    customerVisible: boolean('customer_visible').notNull().default(false),
+    /** Positions of the subprojects in the plan: { subprojects: { <id>: sort } }. */
+    layout: jsonb('layout').$type<{ subprojects?: Record<string, number> }>().notNull().default({}),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+    acceptedBy: uuid('accepted_by').references(() => users.id),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    replacedAt: timestamp('replaced_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('plan_versions_project_idx').on(t.projectId),
+    uniqueIndex('plan_versions_one_working_idx')
+      .on(t.projectId)
+      .where(sql`kind = 'working'`),
+  ],
+);
+
+export const planItems = pgTable(
+  'plan_items',
+  {
+    id: id(),
+    versionId: uuid('version_id')
+      .notNull()
+      .references(() => planVersions.id, { onDelete: 'cascade' }),
+    /** Stable across versions; dependencies and tasks refer to it. */
+    key: uuid('key').notNull(),
+    parentKey: uuid('parent_key'),
+    subprojectId: uuid('subproject_id').references(() => projects.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    sort: doublePrecision('sort').notNull().default(0),
+    pm: jsonb('pm').$type<PlanPm>().notNull().default({ deps: {} }),
+    progress: integer('progress').notNull().default(0),
+    actualStart: date('actual_start'),
+    actualEnd: date('actual_end'),
+    assignees: jsonb('assignees').$type<string[]>().notNull().default([]),
+    internal: boolean('internal').notNull().default(false),
+    rev: integer('rev').notNull().default(1),
+    origin: jsonb('origin'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: uuid('updated_by').references(() => users.id),
+  },
+  (t) => [uniqueIndex('plan_items_version_key_idx').on(t.versionId, t.key)],
 );

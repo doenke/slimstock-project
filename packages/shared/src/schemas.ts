@@ -122,3 +122,59 @@ export type RoleInput = z.input<typeof RoleInput>;
 export type CreateProjectInput = z.input<typeof CreateProjectInput>;
 export type UpdateProjectInput = z.input<typeof UpdateProjectInput>;
 export type AddMemberInput = z.input<typeof AddMemberInput>;
+
+// --- Plan ---
+
+const planDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const pmValue = <T extends z.ZodType>(v: T) => z.object({ v, src: z.enum(['set', 'calc']) });
+const minutes = z.number().int().min(0).max(10_000_000);
+export const PmDepInput = z.object({ type: z.enum(['FS', 'SS', 'FF', 'SF']), lag: z.number().int().min(-10_000_000).max(10_000_000) });
+
+/** Changes to the planning fields; null removes a field. `deps` replaces all predecessors. */
+export const PlanPmPatch = z.object({
+  start: pmValue(planDate).nullable().optional(),
+  end: pmValue(planDate).nullable().optional(),
+  dur: pmValue(minutes).nullable().optional(),
+  milestone: z.boolean().optional(),
+  notBefore: planDate.nullable().optional(),
+  deadline: planDate.nullable().optional(),
+  deps: z.record(z.uuid(), PmDepInput).optional(),
+});
+
+export const CreatePlanItemInput = z.object({
+  title: trimmed(300),
+  milestone: z.boolean().default(false),
+  /** Where: after this task, or at the end of this phase or subproject; nothing = at the end of the plan. */
+  anchor: z
+    .discriminatedUnion('kind', [
+      z.object({ kind: z.literal('item'), key: z.uuid() }),
+      z.object({ kind: z.literal('subproject'), id: z.uuid() }),
+    ])
+    .nullable()
+    .default(null),
+});
+
+export const UpdatePlanItemInput = z.object({
+  rev: z.number().int(),
+  title: trimmed(300).optional(),
+  pm: PlanPmPatch.optional(),
+  progress: z.number().int().min(0).max(100).optional(),
+  actualStart: planDate.nullable().optional(),
+  actualEnd: planDate.nullable().optional(),
+  assignees: z.array(z.uuid()).max(50).optional(),
+  internal: z.boolean().optional(),
+});
+
+export const MovePlanRowInput = z.object({
+  target: z.discriminatedUnion('kind', [
+    z.object({ kind: z.literal('item'), key: z.uuid() }),
+    z.object({ kind: z.literal('subproject'), id: z.uuid() }),
+  ]),
+  direction: z.enum(['up', 'down', 'indent', 'outdent']),
+});
+
+export const PlanSettingsInput = z.object({
+  workDays: z.array(z.number().int().min(0).max(6)).min(1).max(7).optional(),
+  projectStart: planDate.nullable().optional(),
+  level: z.boolean().optional(),
+});

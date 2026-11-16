@@ -569,13 +569,8 @@ legend {
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
-.overview .upcoming {
+.overview .plan-summary {
   grid-column: 1 / -1;
-  border-style: dashed;
-  box-shadow: none;
-}
-.overview .upcoming p {
-  margin: 0;
 }
 .facts {
   display: grid;

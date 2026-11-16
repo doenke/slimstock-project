@@ -1,4 +1,11 @@
-import { LANGUAGE_NAMES, PROJECT_STATUSES, type ProjectDetail, type ProjectStatus, type ProjectSummary } from '@spm/shared';
+import {
+  LANGUAGE_NAMES,
+  PROJECT_STATUSES,
+  type PlanPayload,
+  type ProjectDetail,
+  type ProjectStatus,
+  type ProjectSummary,
+} from '@spm/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { get, patch, post } from '../api';
@@ -6,13 +13,16 @@ import { Dialog, ErrorText, Field, Loading, PageError, PermissionBadge, useLoad,
 import { formatDate } from '../format';
 import { Link, navigate, useLocation } from '../router';
 import { useSession } from '../session';
+import { PlanView } from '../plan/PlanView';
+import { daysText } from '../plan/text';
 import { MembersPanel } from './MembersPanel';
 import { ProjectFields } from './ProjectsPage';
 
 export function ProjectPage({ id }: { id: string }) {
   const { t } = useTranslation();
   const { query } = useLocation();
-  const tab = query.get('tab') === 'members' ? 'members' : 'overview';
+  const tabParam = query.get('tab');
+  const tab = tabParam === 'members' || tabParam === 'plan' ? tabParam : 'overview';
   const { setProjectLanguage } = useSession();
   const { data: project, error, reload } = useLoad(() => get<ProjectDetail>(`/api/projects/${id}`), [id]);
   const [editing, setEditing] = useState(false);
@@ -65,6 +75,7 @@ export function ProjectPage({ id }: { id: string }) {
 
       <div className="tabs">
         {tabLink('overview', t('project.overview'))}
+        {tabLink('plan', t('project.plan'))}
         {tabLink('members', t('project.members'))}
       </div>
 
@@ -108,11 +119,10 @@ export function ProjectPage({ id }: { id: string }) {
               </ul>
             )}
           </section>
-          <section className="card upcoming">
-            <h2>{t('project.planTitle')}</h2>
-            <p className="muted">{t('project.planSoon')}</p>
-          </section>
+          <PlanSummaryCard projectId={p.id} />
         </div>
+      ) : tab === 'plan' ? (
+        <PlanView projectId={p.id} rootId={p.path[0]?.id ?? p.id} />
       ) : (
         <MembersPanel project={p} />
       )}
@@ -237,5 +247,45 @@ function NewSubprojectDialog({ parent, onClose }: { parent: ProjectDetail; onClo
         </div>
       </form>
     </Dialog>
+  );
+}
+
+/** Key facts of the plan on the overview (start, end, progress) with a link to it. */
+function PlanSummaryCard({ projectId }: { projectId: string }) {
+  const { t } = useTranslation();
+  const { data, error } = useLoad(() => get<PlanPayload>(`/api/projects/${projectId}/plan`), [projectId]);
+  const own = data?.computed[`sub:${projectId}`] ?? data?.total ?? null;
+  return (
+    <section className="card plan-summary">
+      <div className="section-head">
+        <h2>{t('project.planTitle')}</h2>
+        {!error && <Link to={`/projects/${projectId}?tab=plan`}>{t('project.openPlan')}</Link>}
+      </div>
+      {error === 'plan_not_shared' ? (
+        <p className="muted">{t('errors.plan_not_shared')}</p>
+      ) : !data ? (
+        error ? null : (
+          <Loading />
+        )
+      ) : !own ? (
+        <p className="muted">{t('project.planEmpty')}</p>
+      ) : (
+        <dl className="facts">
+          <dt>{t('project.period')}</dt>
+          <dd>
+            {formatDate(own.start)} – {formatDate(own.end)}
+          </dd>
+          <dt>{t('plan.col.duration')}</dt>
+          <dd>{daysText(t, own.duration)}</dd>
+          <dt>{t('plan.col.progress')}</dt>
+          <dd>
+            <span className="progress">
+              <span style={{ width: `${own.progress}%` }} />
+            </span>{' '}
+            {own.progress} %
+          </dd>
+        </dl>
+      )}
+    </section>
   );
 }

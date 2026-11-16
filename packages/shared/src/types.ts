@@ -1,3 +1,4 @@
+import type { PlanItem, PlanSettings, PlanSubproject, RowPlan } from './plan.js';
 import type { Language, LocalizedText } from './languages.js';
 import type { PermissionLevel, Rights, Side } from './permissions.js';
 import type { ProjectStatus } from './schemas.js';
@@ -83,4 +84,25 @@ export interface Member {
   inheritedRoleIds: string[];
   inheritedFrom: { id: string; name: string }[];
   effectivePermission: PermissionLevel | null;
+}
+
+export interface PlanPerson {
+  userId: string;
+  name: string;
+  kind: 'staff' | 'customer';
+}
+
+/** The plan as the server sends it: data plus the computed dates (always computed on the full plan). */
+export interface PlanPayload {
+  project: { id: string; name: string; startDate: string | null };
+  version: { id: string; kind: 'working' | 'draft' | 'history'; name: string; status: string };
+  settings: PlanSettings;
+  subprojects: PlanSubproject[];
+  items: PlanItem[];
+  /** Computed per row id (item key, "sub:<id>"). */
+  computed: Record<string, RowPlan>;
+  total: RowPlan | null;
+  projectStart: string;
+  people: PlanPerson[];
+  rights: { edit: boolean; editSettings: boolean };
 }

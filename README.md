@@ -11,18 +11,24 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 1.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
-> Berechtigungen, Benutzerverwaltung und Mehrsprachigkeit sind da. Projektplan mit Entwürfen,
-> Aufwandskalkulation, Kundenzugang per Link und Taskliste folgen – siehe [PLAN.md](PLAN.md).
+> **Stand: Proof of Concept, Stufe 2.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit und der Projektplan (Tabelle und Gantt) sind da.
+> Entwürfe, Aufwandskalkulation, Kundenzugang per Link und Taskliste folgen – siehe [PLAN.md](PLAN.md).
 
-| Projekte | Projekt | Beteiligte | Projektrollen |
+| Projekte | Projektplan | Beteiligte | Projektrollen |
 | --- | --- | --- | --- |
-| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Projekt mit Eckdaten und Teilprojekten](docs/screenshots/projekt.png) | ![Beteiligte von Slimstock und Kunde mit Rollen und Berechtigung](docs/screenshots/beteiligte.png) | ![Verwaltung der Projektrollen für Slimstock und Kunde](docs/screenshots/rollen.png) |
+| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Beteiligte von Slimstock und Kunde mit Rollen und Berechtigung](docs/screenshots/beteiligte.png) | ![Verwaltung der Projektrollen für Slimstock und Kunde](docs/screenshots/rollen.png) |
 
 ## Was Slimstock Projektmanagement für dich macht
 
 - **Projekte mit Teilprojekten** – ein Projekt pro Kunde und Vorhaben, darunter Teilprojekte wie
   „Schnittstellen“ oder „Schulung“, bei Bedarf auch tiefer verschachtelt.
+- **Ein Projektplan für alles** – Vorgänge, Phasen und Meilensteine für das ganze Projekt, jedes
+  Teilprojekt als eigener Block darin. Verknüpfungen („nach Ende“, „gleicher Start“ … mit Abstand),
+  Arbeitstage, feste Termine, Deadlines – die App rechnet frühestes und spätestes Datum, Puffer und
+  den kritischen Pfad aus. Als Tabelle oder als Gantt, in dem du Balken einfach ziehst.
+- **Stand im Blick** – Fortschritt, Ist-Start und Ist-Ende je Vorgang; Phasen, Teilprojekte und das
+  ganze Projekt rechnen ihren Stand daraus.
 - **Wer macht was** – jede Person bekommt eine oder mehrere Projektrollen: Projektleiter, Solution
   Architect, Consultant … bei Slimstock, Projektleiter, Key User, IT-Interface … beim Kunden. Die
   Rollenliste pflegst du selbst.
@@ -90,7 +96,23 @@ deaktivieren geht jederzeit.
 **Projekte → Neues Projekt:** Kunde wählen oder neu anlegen, Name, Kürzel, Projektsprache und
 Zeitraum. Du bist automatisch Projektleiter. Unter **Teilprojekt** legst du die Teilprojekte an.
 
-### 5. Beteiligte eintragen
+### 5. Projektplan aufbauen
+
+Im Projekt unter **Projektplan**: Vorgang eintippen, **+ Vorgang** – er landet hinter der gewählten
+Zeile, in einer gewählten Phase oder einem Teilprojekt am Ende. Mit **⇥** wird ein Vorgang Teil der
+Zeile darüber, so entstehen Phasen; **⇤** holt ihn wieder heraus, **↑ ↓** sortieren. Rechts in den
+Details trägst du Dauer (in Arbeitstagen), feste Termine, Deadline, Vorgänger, Fortschritt und wer
+dran arbeitet ein. Grau heißt berechnet, ↺ macht aus einer Vorgabe wieder eine Rechnung. Im Gantt
+verschiebst du einen Balken per Ziehen, am rechten Rand änderst du die Dauer.
+
+Unter **Planeinstellungen** legst du die Arbeitstage, den Planbeginn und den Ressourcenabgleich fest
+(dann arbeitet jede Person ihre Vorgänge nacheinander ab). Auf einem Teilprojekt zeigt der Plan nur
+dessen Teil; ein Haken holt den ganzen Plan dazu.
+
+Der Plan, den du hier bearbeitest, ist die **Arbeitsversion**. Entwürfe zum Abstimmen mit dem Kunden
+kommen in der nächsten Stufe.
+
+### 6. Beteiligte eintragen
 
 Im Projekt unter **Beteiligte**: Slimstock-Kollegen aus der Liste wählen, Personen beim Kunden mit
 Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sich aus den Rollen; nur
@@ -106,7 +128,10 @@ bleibt, wie es ist.
 
 ## Was die App (noch) nicht kann
 
-- Projektplan, Entwürfe und Aufwandskalkulation kommen in den nächsten Stufen.
+- Entwürfe, Versionsvergleich und Aufwandskalkulation kommen in den nächsten Stufen.
+- Der Plan aktualisiert sich nicht live: Was ein Kollege gleichzeitig ändert, siehst du nach dem
+  nächsten Neuladen. Überschreibt ihr euch, merkt die App das und lädt neu.
+- Keine Feiertage im Arbeitskalender, kein Import aus MS Project.
 - Kunden können sich noch nicht anmelden – der persönliche Link pro Projekt kommt in Stufe 5.
 - Kein Firmenlogin (Microsoft Entra o. Ä.) – vorerst Benutzername und Passwort.
 - Keine Mails: Startpasswörter und später Links gibst du selbst weiter.
