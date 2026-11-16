@@ -62,6 +62,8 @@ export const projects = pgTable(
     name: text('name').notNull(),
     code: text('code'),
     description: text('description'),
+    /** Name of the project in Esynergy (Slimstock internal, never shown to customers). */
+    esynergyName: text('esynergy_name'),
     language: text('language').$type<Language>().notNull(),
     status: text('status').$type<ProjectStatus>().notNull().default('planned'),
     startDate: date('start_date'),

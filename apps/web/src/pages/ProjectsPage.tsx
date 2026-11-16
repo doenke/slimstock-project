@@ -122,6 +122,7 @@ function NewProjectDialog({ onClose }: { onClose: () => void }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [description, setDescription] = useState('');
+  const [esynergyName, setEsynergyName] = useState('');
   const isNewCustomer = customerId === 'new' || (customers?.length === 0 && customerId === '');
   const { busy, error, onSubmit } = useSubmit(async () => {
     const created = await post<ProjectSummary>('/api/projects', {
@@ -132,6 +133,7 @@ function NewProjectDialog({ onClose }: { onClose: () => void }) {
       startDate,
       endDate,
       description,
+      esynergyName,
     });
     navigate(`/projects/${created.id}`);
   });
@@ -170,6 +172,8 @@ function NewProjectDialog({ onClose }: { onClose: () => void }) {
             setEndDate,
             description,
             setDescription,
+            esynergyName,
+            setEsynergyName,
           }}
         />
         <ErrorText code={error} />
@@ -199,6 +203,8 @@ export function ProjectFields(p: {
   setEndDate: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
+  esynergyName: string;
+  setEsynergyName: (v: string) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -228,6 +234,9 @@ export function ProjectFields(p: {
           <input type="date" value={p.endDate} min={p.startDate || undefined} onChange={(e) => p.setEndDate(e.target.value)} />
         </Field>
       </div>
+      <Field label={t('project.esynergyName')} hint={t('project.esynergyHint')}>
+        <input value={p.esynergyName} onChange={(e) => p.setEsynergyName(e.target.value)} maxLength={160} />
+      </Field>
       <Field label={t('project.description')}>
         <textarea rows={3} value={p.description} onChange={(e) => p.setDescription(e.target.value)} maxLength={4000} />
       </Field>

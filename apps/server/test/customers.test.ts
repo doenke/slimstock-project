@@ -182,3 +182,31 @@ describe('customer view and review', () => {
     expect((await t.call(s.cookie, 'POST', '/api/me/password', { current: 'x', password: 'long-enough-pass' })).status).toBe(403);
   });
 });
+
+describe('Esynergy project name', () => {
+  it('Slimstock stores and sees it; customers see neither the name nor that it changed', async () => {
+    const created = await t.call(t.admin.cookie, 'POST', '/api/projects', {
+      customerName: 'Muster',
+      name: 'Rollout',
+      esynergyName: 'P-2026-0815 Muster Rollout',
+    });
+    const id = created.body.id as string;
+    expect((await t.call(t.admin.cookie, 'GET', `/api/projects/${id}`)).body.esynergyName).toBe('P-2026-0815 Muster Rollout');
+    expect((await t.call(t.admin.cookie, 'PATCH', `/api/projects/${id}`, { esynergyName: 'P-2026-0816' })).status).toBe(200);
+    expect((await t.call(t.admin.cookie, 'GET', `/api/projects/${id}`)).body.esynergyName).toBe('P-2026-0816');
+
+    const members = (
+      await t.call(t.admin.cookie, 'POST', `/api/projects/${id}/members`, { name: 'Clara Kunde', roleIds: [t.role('cu_pl')] })
+    ).body as Member[];
+    const clara = members.find((m) => m.name === 'Clara Kunde')!;
+    const link = (await t.call(t.admin.cookie, 'GET', `/api/projects/${id}/members/${clara.membershipId}/link`)).body as MemberLink;
+    const { cookie } = await open(link.url);
+    const seen = await t.call(cookie, 'GET', `/api/projects/${id}`);
+    expect(seen.status).toBe(200);
+    expect(seen.body).not.toHaveProperty('esynergyName');
+    expect(JSON.stringify((await t.call(cookie, 'GET', `/api/projects/${id}/audit`)).body)).not.toContain('esynergyName');
+    expect(JSON.stringify((await t.call(t.admin.cookie, 'GET', `/api/projects/${id}/audit`)).body)).toContain('esynergyName');
+    // Customer leads cannot change project data at all.
+    expect((await t.call(cookie, 'PATCH', `/api/projects/${id}`, { esynergyName: 'x' })).status).toBe(403);
+  });
+});

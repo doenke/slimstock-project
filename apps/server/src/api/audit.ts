@@ -12,6 +12,14 @@ const AREAS: Record<string, string[]> = {
   tasks: ['task.'],
 };
 
+/** Fields customers must not learn about, not even that they changed. */
+const INTERNAL_FIELDS = new Set(['esynergyName']);
+
+function publicDetails(details: Record<string, unknown>): Record<string, unknown> {
+  if (!Array.isArray(details.fields)) return details;
+  return { ...details, fields: (details.fields as string[]).filter((f) => !INTERNAL_FIELDS.has(f)) };
+}
+
 /** The change log of a project (and its subprojects), newest first, 100 at a time. */
 export async function auditRoutes(app: FastifyInstance, { db }: { db: Db }) {
   app.get<{ Params: { id: string }; Querystring: { before?: string; area?: string } }>('/api/projects/:id/audit', async (request) => {
@@ -45,7 +53,7 @@ export async function auditRoutes(app: FastifyInstance, { db }: { db: Db }) {
       userName,
       userKind,
       projectId: a.projectId,
-      details: a.details,
+      details: internalOk ? a.details : publicDetails(a.details),
     }));
   });
 }

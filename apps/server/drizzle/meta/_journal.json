@@ -50,6 +50,13 @@
       "when": 1794842647428,
       "tag": "0006_audit_mail",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794856697233,
+      "tag": "0007_esynergy_name",
+      "breakpoints": true
     }
   ]
 }

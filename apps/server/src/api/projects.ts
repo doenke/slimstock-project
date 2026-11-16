@@ -164,6 +164,7 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
     return {
       ...toSummary(p, level, all),
       description: p.description,
+      ...(rights.viewInternal ? { esynergyName: p.esynergyName } : {}),
       path,
       subprojects: all.filter((c) => c.parentId === p.id).map((c) => toSummary(c, levels.get(c.id) ?? null, all)),
       rights,
@@ -202,6 +203,7 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
           name: input.name,
           code: input.code,
           description: input.description,
+          esynergyName: input.esynergyName,
           language: language ?? config.DEFAULT_LANGUAGE,
           startDate: input.startDate,
           endDate: input.endDate,

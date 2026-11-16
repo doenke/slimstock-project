@@ -129,7 +129,10 @@ deaktivieren geht jederzeit.
 ### 4. Projekt anlegen
 
 **Projekte → Neues Projekt:** Kunde wählen oder neu anlegen, Name, Kürzel, Projektsprache und
-Zeitraum. Du bist automatisch Projektleiter. Unter **Teilprojekt** legst du die Teilprojekte an.
+Zeitraum. Trag den **Projektnamen aus Esynergy** ein, dann findest du das Projekt dort sofort wieder –
+das Feld sieht nur Slimstock, der Kunde nicht (auch nicht im Verlauf). Du bist automatisch
+Projektleiter. Unter **Teilprojekt** legst du die Teilprojekte an; auch die können einen eigenen
+Esynergy-Namen haben.
 
 ### 5. Projektplan aufbauen
 

@@ -40,7 +40,8 @@ Vorlagen (Projektdesign, später)
 └─ Vorlage „Slim4-Einführung“ mit Bausteinen (Teilprojekte) zum An- und Abwählen
 ```
 
-- **Projekt**: gehört zu einem Kunden, hat Name, Kürzel, Zeitraum, Arbeitskalender, Status.
+- **Projekt**: gehört zu einem Kunden, hat Name, Kürzel, Zeitraum, Arbeitskalender, Status und den
+  Projektnamen in Esynergy (nur für Slimstock sichtbar, auch je Teilprojekt).
 - **Teilprojekt**: eigener Name, eigene Verantwortliche, eigene Taskliste. Technisch ein Baum,
   in der Oberfläche zunächst zwei Ebenen.
 - **Projektplan**: einer pro Projekt, er umfasst alle Teilprojekte. Jedes Teilprojekt ist im Plan eine

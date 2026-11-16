@@ -133,6 +133,8 @@
     "start": "Beginn",
     "end": "Ende",
     "description": "Beschreibung",
+    "esynergyName": "Projektname in Esynergy",
+    "esynergyHint": "Nur für Slimstock sichtbar.",
     "breadcrumb": "Pfad",
     "isSubproject": "Teilprojekt",
     "overview": "Überblick",
@@ -674,7 +676,8 @@
       "effortView": "Kundensicht",
       "durationFromEffort": "Dauer aus Aufwand",
       "warnPct": "Ampel",
-      "critPct": "Ampel"
+      "critPct": "Ampel",
+      "esynergyName": "Esynergy-Name"
     }
   }
 }

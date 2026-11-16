@@ -133,6 +133,8 @@
     "start": "Start",
     "end": "End",
     "description": "Description",
+    "esynergyName": "Project name in Esynergy",
+    "esynergyHint": "Visible to Slimstock only.",
     "breadcrumb": "Path",
     "isSubproject": "Subproject",
     "overview": "Overview",
@@ -674,7 +676,8 @@
       "effortView": "customer view",
       "durationFromEffort": "duration from effort",
       "warnPct": "traffic light",
-      "critPct": "traffic light"
+      "critPct": "traffic light",
+      "esynergyName": "Esynergy name"
     }
   }
 }

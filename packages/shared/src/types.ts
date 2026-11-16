@@ -71,6 +71,8 @@ export interface ProjectSummary {
 
 export interface ProjectDetail extends ProjectSummary {
   description: string | null;
+  /** Name of the project in Esynergy; only for Slimstock staff (undefined for customers). */
+  esynergyName?: string | null;
   /** Ancestors from the top-level project down to the parent. */
   path: { id: string; name: string }[];
   subprojects: ProjectSummary[];

@@ -94,6 +94,12 @@ export function ProjectPage({ id }: { id: string }) {
               <dd>{p.startDate || p.endDate ? `${formatDate(p.startDate) || '…'} – ${formatDate(p.endDate) || '…'}` : '—'}</dd>
               <dt>{t('project.language')}</dt>
               <dd>{LANGUAGE_NAMES[p.language]}</dd>
+              {p.esynergyName !== undefined && (
+                <>
+                  <dt>{t('project.esynergyName')}</dt>
+                  <dd>{p.esynergyName || '—'}</dd>
+                </>
+              )}
             </dl>
             {p.description ? <p className="description">{p.description}</p> : <p className="muted">{t('project.noDescription')}</p>}
           </section>
@@ -158,9 +164,10 @@ function EditProjectDialog({ project, onClose, onSaved }: { project: ProjectDeta
   const [startDate, setStartDate] = useState(project.startDate ?? '');
   const [endDate, setEndDate] = useState(project.endDate ?? '');
   const [description, setDescription] = useState(project.description ?? '');
+  const [esynergyName, setEsynergyName] = useState(project.esynergyName ?? '');
   const [status, setStatus] = useState<ProjectStatus>(project.status);
   const { busy, error, onSubmit } = useSubmit(async () => {
-    await patch(`/api/projects/${project.id}`, { name, code, language, startDate, endDate, description, status });
+    await patch(`/api/projects/${project.id}`, { name, code, language, startDate, endDate, description, esynergyName, status });
     onSaved();
   });
   return (
@@ -180,6 +187,8 @@ function EditProjectDialog({ project, onClose, onSaved }: { project: ProjectDeta
             setEndDate,
             description,
             setDescription,
+            esynergyName,
+            setEsynergyName,
           }}
         />
         <Field label={t('project.status')}>
@@ -213,6 +222,7 @@ function NewSubprojectDialog({ parent, onClose }: { parent: ProjectDetail; onClo
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [description, setDescription] = useState('');
+  const [esynergyName, setEsynergyName] = useState('');
   const { busy, error, onSubmit } = useSubmit(async () => {
     const created = await post<ProjectSummary>('/api/projects', {
       parentId: parent.id,
@@ -222,6 +232,7 @@ function NewSubprojectDialog({ parent, onClose }: { parent: ProjectDetail; onClo
       startDate,
       endDate,
       description,
+      esynergyName,
     });
     navigate(`/projects/${created.id}`);
   });
@@ -242,6 +253,8 @@ function NewSubprojectDialog({ parent, onClose }: { parent: ProjectDetail; onClo
             setEndDate,
             description,
             setDescription,
+            esynergyName,
+            setEsynergyName,
           }}
         />
         <ErrorText code={error} />

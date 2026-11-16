@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "esynergy_name" text;
