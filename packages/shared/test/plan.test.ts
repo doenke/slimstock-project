@@ -120,6 +120,8 @@ const item = (key: string, extra: Partial<PlanItem> = {}): PlanItem => ({
   actualEnd: null,
   assignees: [],
   internal: false,
+  efforts: {},
+  remaining: {},
   rev: 1,
   ...extra,
 });
@@ -214,7 +216,7 @@ describe('plan tree', () => {
   });
 
   it('reads settings defensively', () => {
-    expect(planSettingsOf({ workDays: [6, 0, 9], projectStart: 'x', level: 'yes' })).toEqual({ workDays: [0, 6], projectStart: null, level: false });
+    expect(planSettingsOf({ workDays: [6, 0, 9], projectStart: 'x', level: 'yes', effortView: 'all' })).toMatchObject({ workDays: [0, 6], projectStart: null, level: false, effortView: 'plan' });
     expect(planSettingsOf(null)).toEqual(DEFAULT_PLAN_SETTINGS);
   });
 });

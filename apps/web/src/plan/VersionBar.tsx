@@ -6,6 +6,7 @@ import { get, patch, post } from '../api';
 import { Dialog, ErrorText, Field, Loading, useLoad, useSubmit } from '../components/ui';
 import { formatDate, formatDateTime } from '../format';
 import { DiffSummary } from './DiffPanel';
+import { fmtDays } from './EffortView';
 
 interface Props {
   projectId: string;
@@ -188,6 +189,7 @@ export function VersionBar({ projectId, plan, versions, compareId, onShow, onCha
       )}
       {dialog === 'accept' && (
         <AcceptDialog
+          plan={plan}
           version={v}
           onClose={() => setDialog(null)}
           onAccepted={() => {
@@ -246,13 +248,26 @@ function DraftDialog({
   );
 }
 
-function AcceptDialog({ version, onClose, onAccepted }: { version: PlanVersionInfo; onClose: () => void; onAccepted: () => void }) {
+function AcceptDialog({
+  plan,
+  version,
+  onClose,
+  onAccepted,
+}: {
+  plan: PlanPayload;
+  version: PlanVersionInfo;
+  onClose: () => void;
+  onAccepted: () => void;
+}) {
   const { t } = useTranslation();
   const { data, error: loadError } = useLoad(() => get<AcceptPreview>(`/api/plan-versions/${version.id}/accept-preview`), [version.id]);
+  const [changeRequests, setChangeRequests] = useState<Record<string, boolean>>({});
   const { busy, error, onSubmit } = useSubmit(async () => {
-    await post(`/api/plan-versions/${version.id}/accept`);
+    await post(`/api/plan-versions/${version.id}/accept`, { changeRequests });
     onAccepted();
   });
+  const unitName = (id: string) =>
+    id === plan.project.id ? t('effort.projectLevel') : (plan.subprojects.find((s) => s.id === id)?.name ?? '?');
   return (
     <Dialog title={t('versions.acceptTitle', { version: versionLabel(t, version) })} onClose={onClose} wide>
       <form className="stack" onSubmit={onSubmit}>
@@ -281,6 +296,46 @@ function AcceptDialog({ version, onClose, onAccepted }: { version: PlanVersionIn
                 </ul>
               )}
             </section>
+            {data.fixedPrice.length > 0 && (
+              <section className="warn-box">
+                <h3 className="small-head">{t('effort.fixedTitle')}</h3>
+                {data.fixedPrice.map((f) =>
+                  f.budget === null ? (
+                    <p key={f.unitId} className="small">
+                      {t('effort.fixedNew', { unit: unitName(f.unitId), plan: fmtDays(f.plan) || '0' })}
+                    </p>
+                  ) : (
+                    <fieldset key={f.unitId} className="fixed-choice">
+                      <legend className="small">
+                        {t('effort.fixedChanged', {
+                          unit: unitName(f.unitId),
+                          budget: fmtDays(f.budget) || '0',
+                          plan: fmtDays(f.plan) || '0',
+                        })}
+                      </legend>
+                      <label className="check small">
+                        <input
+                          type="radio"
+                          name={`cr-${f.unitId}`}
+                          checked={!!changeRequests[f.unitId]}
+                          onChange={() => setChangeRequests({ ...changeRequests, [f.unitId]: true })}
+                        />
+                        {t('effort.asChangeRequest')}
+                      </label>
+                      <label className="check small">
+                        <input
+                          type="radio"
+                          name={`cr-${f.unitId}`}
+                          checked={!changeRequests[f.unitId]}
+                          onChange={() => setChangeRequests({ ...changeRequests, [f.unitId]: false })}
+                        />
+                        {t('effort.withinFixed')}
+                      </label>
+                    </fieldset>
+                  ),
+                )}
+              </section>
+            )}
             {data.lost.length > 0 && (
               <section className="warn-box">
                 <h3 className="small-head">⚠ {t('versions.lostTitle')}</h3>

@@ -174,6 +174,10 @@
   flex-direction: column;
   gap: 0.7rem;
 }
+/* The panel scrolls as a whole; its parts must not shrink (the people list would collapse to nothing). */
+.plan-panel > * {
+  flex-shrink: 0;
+}
 .plan-panel header {
   display: flex;
   align-items: center;
@@ -766,4 +770,156 @@ ul.plain {
 }
 .warn-box p {
   margin: 0 0 0.3rem;
+}
+
+/* Estimate */
+.effort-table th.group {
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.effort-table th.group.slimstock,
+.effort-table td.slimstock {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+.effort-table th.group.customer,
+.effort-table td.customer {
+  background: color-mix(in srgb, var(--orange) 5%, transparent);
+}
+.effort-table th.role-head {
+  max-width: 7rem;
+  white-space: normal;
+  font-size: 0.75rem;
+  line-height: 1.15;
+  vertical-align: bottom;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.effort-table td.sum {
+  font-weight: 600;
+}
+.effort-table td.over {
+  color: var(--danger);
+}
+.effort-table .total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}
+.day-input {
+  width: 4.2rem;
+  padding: 0.2rem 0.35rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* In the estimate table the inputs look like spreadsheet cells until touched. */
+.effort-table .day-input {
+  border-color: transparent;
+  background: transparent;
+  width: 100%;
+  min-width: 3.5rem;
+}
+.effort-table tr:hover .day-input {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.effort-table .day-input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+.effort-mini {
+  width: 100%;
+}
+.effort-mini .day-input {
+  width: 3.4rem;
+}
+.add-role {
+  width: auto;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+}
+.day-input.bad {
+  border-color: var(--danger);
+}
+.budget-panel {
+  margin-top: 1rem;
+}
+.budget-table select {
+  width: auto;
+  padding: 0.2rem 0.4rem;
+}
+.budget-level {
+  font-weight: 600;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+}
+.budget-level.level-ok {
+  color: var(--success);
+}
+.budget-level.level-warn {
+  background: color-mix(in srgb, var(--orange) 18%, transparent);
+  color: color-mix(in srgb, var(--orange) 70%, var(--text));
+}
+.budget-level.level-crit {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+.effort-mini {
+  font-size: 0.85rem;
+}
+.effort-mini td,
+.effort-mini th {
+  padding: 0.2rem 0.35rem;
+}
+.effort-mini .role-cell.slimstock {
+  border-left: 3px solid var(--primary);
+}
+.effort-mini .role-cell.customer {
+  border-left: 3px solid var(--orange);
+}
+.bookings ul {
+  list-style: none;
+  margin: 0.3rem 0;
+  padding: 0;
+}
+.bookings li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  border-top: 1px solid var(--border);
+  padding: 0.2rem 0;
+}
+.booking-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.booking-form input,
+.booking-form select {
+  padding: 0.3rem 0.4rem;
+  font-size: 0.85rem;
+  width: 100%;
+}
+.booking-form .error {
+  grid-column: 1 / -1;
+}
+.fixed-choice {
+  border: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+}
+a.button {
+  display: inline-block;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+a.button:hover {
+  border-color: var(--primary);
+  text-decoration: none;
 }

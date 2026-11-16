@@ -1,7 +1,7 @@
 # Slimstock Projektmanagement – Hinweise für Claude
 
 Browser-App (PWA) zum Führen von Slimstock-Kundenprojekten, geteilt mit dem Kunden. Fachlicher Plan und
-alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–3 fertig.
+alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–4 fertig.
 
 ## Aufbau
 
@@ -14,9 +14,13 @@ pnpm-Monorepo, TypeScript durchgehend.
   von Phasen, Rollups, Einfügen/Verschieben). Der Server rechnet den Plan immer auf dem vollen Stand und
   schickt Ergebnis + gefilterte Daten (`PlanPayload`); der Client rechnet nicht selbst. Versionen:
   Vorgänge behalten in jeder Version ihren `key`; Vergleich über `diffPlans`, beim Annehmen gehen die
-  `ACTUAL_FIELDS` (Fortschritt, Ist-Termine) aus der Arbeitsversion mit.
+  `ACTUAL_FIELDS` (Fortschritt, Ist-Termine, Restaufwand) aus der Arbeitsversion mit. Kalkulation:
+  `effort.ts` (Plan je Rolle am Vorgang `efforts`, Rest `remaining`, Ist-Buchungen per `key` in
+  `effort_entries`, Rollups, Budget je Abrechnungseinheit = Teilprojekt bzw. Projektebene; Festpreis-Budget
+  in `plan_versions.terms`). Alles in Minuten (1 Tag = 480), angezeigt in Tagen.
 - `apps/server` – Fastify 5, Drizzle + PostgreSQL. `src/app.ts` (Hooks, Healthcheck, statische Web-App),
-  `src/api/*` (auth, admin, projects, plan, versions = Entwürfe/Annehmen, access = Rechteberechnung), `src/auth/*` (Argon2id, Sessions,
+  `src/api/*` (auth, admin, projects, plan, versions = Entwürfe/Annehmen, effort = Buchungen/Abrechnung,
+  export = Excel über exceljs, access = Rechteberechnung), `src/i18n.ts` (Texte für Server-Ausgaben), `src/auth/*` (Argon2id, Sessions,
   Login-Bremse), `src/db/schema.ts` + Migrationen in `drizzle/` (`pnpm db:generate`, nie von Hand ändern).
 - `apps/web` – React 19 + Vite, eigener Mini-Router (`router.tsx`), i18next, Plan unter `src/plan/*`, Service Worker `src/sw.ts`
   (Netz zuerst, API/Healthz nie gecacht), Styles in `src/styles.css` (Slimstock-Farben als Variablen).

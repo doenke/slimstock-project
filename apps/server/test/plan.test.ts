@@ -138,7 +138,7 @@ describe('plan', () => {
       workDays: [1, 2, 3, 4],
       projectStart: '2026-11-19',
     });
-    expect(s.body.settings).toEqual({ workDays: [1, 2, 3, 4], projectStart: '2026-11-19', level: false });
+    expect(s.body.settings).toMatchObject({ workDays: [1, 2, 3, 4], projectStart: '2026-11-19', level: false });
     expect(s.body.computed[a.key].start).toBe('2026-11-19');
   });
 });

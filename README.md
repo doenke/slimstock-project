@@ -11,14 +11,14 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 3.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
-> Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt) sowie
-> Entwürfe mit Vergleich und Historie sind da. Aufwandskalkulation, Kundenzugang per Link und Taskliste
+> **Stand: Proof of Concept, Stufe 4.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt), Entwürfe
+> mit Vergleich und Historie sowie die Aufwandskalkulation sind da. Kundenzugang per Link und Taskliste
 > folgen – siehe [PLAN.md](PLAN.md).
 
-| Projekte | Projektplan | Entwurf im Vergleich | Beteiligte |
+| Projekte | Projektplan | Entwurf im Vergleich | Kalkulation |
 | --- | --- | --- | --- |
-| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Beteiligte von Slimstock und Kunde mit Rollen und Berechtigung](docs/screenshots/beteiligte.png) |
+| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Kalkulation mit Plan, Ist, Rest und Prognose je Seite und dem Budget je Teilprojekt](docs/screenshots/kalkulation.png) |
 
 ## Was Slimstock Projektmanagement für dich macht
 
@@ -35,6 +35,17 @@ Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 - **Sehen, was sich ändert** – jede Version lässt sich mit jeder anderen vergleichen: graue Balken im
   Gantt, eine Liste aller neuen, entfernten und verschobenen Vorgänge und wie sich das Projektende
   bewegt.
+- **Aufwand in Tagen, nicht in Euro** – pro Vorgang trägst du die Tage je Projektrolle ein: Solution
+  Architect 3, Consultant 2, Key User 2. Die App summiert über Phasen, Teilprojekte und das Projekt,
+  getrennt nach Slimstock- und Kunden-Tagen – so sieht auch der Kunde, wie viel seine Leute einplanen
+  müssen.
+- **Ist, Rest und Prognose** – geleistete Tage bucht ihr von Hand am Vorgang (Datum, Person, Rolle,
+  Notiz). Rest ist Plan minus Ist, außer du schätzt ihn selbst; die Prognose zeigt, wo ein Teilprojekt
+  landet, mit Ampel gegen das Budget.
+- **Festpreis oder nach Aufwand** – je Teilprojekt. Beim Festpreis bleibt das Budget fest, Mehraufwand
+  zeigt die App intern rot. Wächst der Aufwand in einem Entwurf, fragt die App beim Annehmen:
+  Nachtrag oder im Festpreis?
+- **Excel-Export** – Plan und Aufwand, Budget und Buchungen als Excel-Datei in der Projektsprache.
 - **Stand im Blick** – Fortschritt, Ist-Start und Ist-Ende je Vorgang; Phasen, Teilprojekte und das
   ganze Projekt rechnen ihren Stand daraus.
 - **Wer macht was** – jede Person bekommt eine oder mehrere Projektrollen: Projektleiter, Solution
@@ -137,7 +148,30 @@ einem Namen und dem Grund („Der Kunde liefert die Testdaten später“). Im En
 Entwürfe anlegen und bearbeiten darf das Slimstock-Team; zur Abstimmung geben und annehmen nur die
 Projektleitung Slimstock. Der Kunde sieht Entwürfe noch nicht – das kommt mit dem Kundenzugang.
 
-### 7. Beteiligte eintragen
+### 7. Aufwand kalkulieren und buchen
+
+Im Projektplan auf **Kalkulation** umschalten: eine Spalte je kalkulierter Projektrolle, Slimstock links,
+Kunde rechts. Tage direkt in die Zellen tippen (Vierteltage, „1,5“ geht). Phasen, Teilprojekte und die
+Gesamtzeile rechnen mit. Im Detailbereich eines Vorgangs stehen die Rollen mit Aufwand; **+ Rolle**
+nimmt eine weitere dazu.
+
+- **Ist-Buchungen** im Detailbereich: Datum, Person, Rolle, Tage, Notiz. Buchungen gelten für alle
+  Versionen des Plans – ein neuer Entwurf ändert nichts am Gebuchten.
+- **Rest** ist automatisch Plan minus Ist; trag ihn selbst ein, wenn du es besser weißt.
+- **Ist & Prognose** zeigt je Seite Plan, Ist, Rest und Prognose; darunter das **Budget je
+  Teilprojekt** mit Abweichung und Ampel (Schwellen unter Planeinstellungen).
+- **Abrechnung**: In der Budget-Tabelle stellt die Projektleitung je Teilprojekt *Festpreis* oder
+  *nach Aufwand* ein. Festpreis in der Arbeitsversion legt das Budget sofort auf den aktuellen Plan
+  fest; in einem Entwurf erst beim Annehmen. Beim Annehmen eines Entwurfs mit mehr Aufwand in einem
+  Festpreis-Teil entscheidest du: **Nachtrag** (Budget wird erhöht) oder **im Festpreis** (Budget bleibt).
+- **Dauer aus Aufwand** (Planeinstellungen): Vorgänge ohne eingetragene Dauer dauern so lange wie die
+  Rolle mit dem meisten Aufwand, geteilt durch die eingeplanten Personen mit dieser Rolle.
+- Was der **Kunde** von der Kalkulation sieht, stellst du unter Planeinstellungen ein: nichts, nur die
+  Tage seiner Leute, alle Plan-Tage oder alles mit Ist und Prognose (Standard: alle Plan-Tage).
+- **Excel-Export** oben rechts: Plan und Aufwand, Budget und Buchungen – genau das, was du in der App
+  sehen darfst.
+
+### 8. Beteiligte eintragen
 
 Im Projekt unter **Beteiligte**: Slimstock-Kollegen aus der Liste wählen, Personen beim Kunden mit
 Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sich aus den Rollen; nur
@@ -153,7 +187,8 @@ bleibt, wie es ist.
 
 ## Was die App (noch) nicht kann
 
-- Aufwandskalkulation und Kundenzugang (samt Abstimmung durch den Kunden) kommen in den nächsten Stufen.
+- Kundenzugang (samt Abstimmung durch den Kunden) kommt in der nächsten Stufe.
+- Keine Preise und keine Euro – bewusst. Ist-Zeiten kommen noch nicht aus einer Zeiterfassung.
 - Änderungen, die in der Arbeitsversion gemacht wurden, während ein Entwurf entstand, lassen sich beim
   Annehmen noch nicht einzeln übernehmen – die App zeigt sie nur an.
 - Der Plan aktualisiert sich nicht live: Was ein Kollege gleichzeitig ändert, siehst du nach dem

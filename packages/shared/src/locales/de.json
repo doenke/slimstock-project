@@ -269,7 +269,8 @@
     "view": "Ansicht",
     "mode": {
       "gantt": "Gantt",
-      "table": "Tabelle"
+      "table": "Tabelle",
+      "effort": "Kalkulation"
     },
     "zoom": "Zeitachse",
     "zoomLevel": {
@@ -370,7 +371,84 @@
       "assignees": "Wer",
       "place": "Position",
       "internal": "intern",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "effort": "Aufwand"
     }
+  },
+  "effort": {
+    "mode": "Kalkulation",
+    "total": "Gesamt",
+    "plan": "Plan",
+    "actual": "Ist",
+    "remaining": "Rest",
+    "forecast": "Prognose",
+    "budget": "Budget",
+    "deviation": "Abweichung",
+    "days": "Tage",
+    "date": "Datum",
+    "person": "Person",
+    "role": "Rolle",
+    "note": "Notiz",
+    "sumSlimstock": "Σ Slimstock",
+    "sumCustomer": "Σ Kunde",
+    "view": {
+      "plan": "Plan",
+      "actual": "Ist & Prognose"
+    },
+    "noRoles": "Es gibt keine kalkulierten Projektrollen – das legt ein Admin unter Verwaltung → Projektrollen fest.",
+    "billingLabel": "Abrechnung",
+    "billing": {
+      "tm": "Nach Aufwand",
+      "fixed": "Festpreis"
+    },
+    "pending": "Budget wird beim Annehmen des Entwurfs festgelegt",
+    "budgetTitle": "Budget je Abrechnungseinheit (Slimstock-Tage)",
+    "projectLevel": "Projektebene",
+    "level": {
+      "ok": "im Rahmen",
+      "warn": "knapp über Budget",
+      "crit": "über Budget"
+    },
+    "fixedHint": "Beim Festpreis bleibt das Budget fest; Mehraufwand ist Slimstock-Risiko.",
+    "effortTitle": "Aufwand (Tage je Rolle)",
+    "bookings": "Ist-Buchungen",
+    "addBooking": "Buchen",
+    "noBookings": "Noch nichts gebucht.",
+    "deleteBooking": "Buchung löschen",
+    "confirmDeleteBooking": "Diese Buchung löschen?",
+    "remainingHint": "Rest leer = Plan − Ist (erledigte Vorgänge: 0).",
+    "planHint": "Tage je Rolle, in Vierteltagen.",
+    "phaseHint": "Summe der Vorgänge darin.",
+    "export": "Excel-Export",
+    "orphan": "Dazu {{days}} Tage Ist auf Vorgängen, die es in dieser Version nicht gibt.",
+    "readOnlyBookings": "Buchungen gelten für alle Versionen des Plans.",
+    "fixedTitle": "Festpreis-Teilprojekte mit geändertem Aufwand",
+    "fixedNew": "{{unit}}: neuer Festpreis – das Budget wird auf {{plan}} Tage festgelegt.",
+    "fixedChanged": "{{unit}}: Budget {{budget}} Tage, geplant {{plan}} Tage.",
+    "asChangeRequest": "Nachtrag – Budget auf den Plan erhöhen",
+    "withinFixed": "Im Festpreis – Budget bleibt",
+    "settingsTitle": "Aufwand",
+    "durationFromEffortLabel": "Dauer aus Aufwand",
+    "durationFromEffortHint": "Ohne eingetragene Dauer dauert ein Vorgang so lange wie die Rolle mit dem meisten Aufwand – geteilt durch die eingeplanten Personen mit dieser Rolle.",
+    "effortViewLabel": "Was der Kunde von der Kalkulation sieht",
+    "effortView": {
+      "none": "Nichts",
+      "customer": "Nur die Tage seiner eigenen Leute",
+      "plan": "Alle Plan-Tage",
+      "full": "Alle Tage mit Ist und Prognose"
+    },
+    "warnPct": "Gelb ab (% über Budget)",
+    "critPct": "Rot ab (% über Budget)",
+    "changeTotal": "Aufwand {{from}} → {{to}} Tage ({{delta}})",
+    "addRole": "Rolle"
+  },
+  "export": {
+    "sheetPlan": "Plan und Aufwand",
+    "sheetBudget": "Budget",
+    "sheetEntries": "Ist-Buchungen",
+    "unit": "Aufwand in Personentagen",
+    "unitName": "Abrechnungseinheit",
+    "sumSlimstock": "Summe Slimstock",
+    "sumCustomer": "Summe Kunde"
   }
 }

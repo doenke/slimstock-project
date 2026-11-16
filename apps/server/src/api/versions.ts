@@ -1,6 +1,11 @@
 import {
   ACTUAL_FIELDS,
+  AcceptInput,
   CreateDraftInput,
+  planByUnit,
+  totalOf,
+  type PlanTree,
+  type RoleMinutes,
   computePlan,
   UpdateVersionInput,
   VersionStatusInput,
@@ -21,6 +26,7 @@ import {
   canSeeVersion,
   computeVersion,
   context,
+  effortRoles,
   payload,
   versionInfo,
   workingVersion,
@@ -53,6 +59,8 @@ async function copyItems(tx: DbOrTx, from: PlanItem[], toVersionId: string, user
       actualEnd: i.actualEnd,
       assignees: i.assignees,
       internal: i.internal,
+      efforts: i.efforts,
+      remaining: i.remaining,
       updatedBy: userId,
     })),
   );
@@ -65,8 +73,21 @@ function carryOver(working: PlanItem[], draft: PlanItem[]) {
   for (const d of draft) {
     const w = byKey.get(d.key);
     if (!w) continue;
-    const fields = ACTUAL_FIELDS.filter((f) => w[f] !== d[f]);
+    const fields = ACTUAL_FIELDS.filter((f) => JSON.stringify(w[f]) !== JSON.stringify(d[f]));
     if (fields.length) out.push({ item: d, fields, values: Object.fromEntries(fields.map((f) => [f, w[f]])) });
+  }
+  return out;
+}
+
+/** Fixed-price units of a version without a budget yet, or whose planned Slimstock effort differs from it. */
+async function fixedPriceChanges(db: DbOrTx, version: VersionRow, tree: PlanTree) {
+  const slimstock = new Set((await effortRoles(db)).filter((r) => r.side === 'slimstock').map((r) => r.id));
+  const plans = planByUnit(tree, slimstock);
+  const out: { unitId: string; budget: RoleMinutes | null; plan: RoleMinutes }[] = [];
+  for (const [unitId, t] of Object.entries(version.terms)) {
+    if (t.billing !== 'fixed') continue;
+    const plan = plans.get(unitId) ?? {};
+    if (!t.budget || totalOf(t.budget, slimstock) !== totalOf(plan, slimstock)) out.push({ unitId, budget: t.budget ?? null, plan });
   }
   return out;
 }
@@ -121,6 +142,7 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
           basedOnVersionId: base.id,
           baseSnapshot: items,
           layout: base.layout,
+          terms: base.terms,
           createdBy: request.user.id,
         })
         .returning({ id: planVersions.id });
@@ -178,6 +200,11 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
       carried: carryOver(w.items, d.items).map((c) => ({ key: c.item.key, title: c.item.title, fields: c.fields })),
       lost,
       diff: diffPlans(w.plan, d.plan, w.settings.workDays),
+      fixedPrice: (await fixedPriceChanges(db, version, d.plan.tree)).map(({ unitId, budget, plan }) => ({
+        unitId,
+        budget: budget && totalOf(budget),
+        plan: totalOf(plan),
+      })),
     };
   });
 
@@ -185,6 +212,7 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
   app.post<{ Params: { vid: string } }>('/api/plan-versions/:vid/accept', async (request) => {
     const { version, ctx } = await versionFor(db, request.user, request.params.vid);
     if (!rightsOf(ctx.rootLevel).manageVersions) throw forbidden();
+    const { changeRequests } = parse(AcceptInput, request.body ?? {});
     await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT id FROM plan_versions WHERE project_id = ${ctx.rootId} FOR UPDATE`);
       const [draft] = await tx.select().from(planVersions).where(eq(planVersions.id, version.id));
@@ -197,11 +225,21 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
           .set({ ...c.values, rev: c.item.rev + 1 })
           .where(and(eq(planItems.versionId, draft.id), eq(planItems.key, c.item.key)));
       }
+      // Fixed price: a new fixed price gets its budget now; a changed effort raises it only as a change request.
+      const terms = { ...draft.terms };
+      let isChangeRequest = false;
+      const draftTree = (await computeVersion(tx, ctx, draft)).plan.tree;
+      for (const c of await fixedPriceChanges(tx, draft, draftTree)) {
+        if (!c.budget || changeRequests[c.unitId]) {
+          terms[c.unitId] = { billing: 'fixed', budget: c.plan };
+          if (c.budget) isChangeRequest = true;
+        }
+      }
       const now = new Date();
       await tx.update(planVersions).set({ kind: 'history', replacedAt: now }).where(eq(planVersions.id, working.id));
       await tx
         .update(planVersions)
-        .set({ kind: 'working', status: 'accepted', acceptedAt: now, acceptedBy: request.user.id })
+        .set({ kind: 'working', status: 'accepted', acceptedAt: now, acceptedBy: request.user.id, terms, isChangeRequest })
         .where(eq(planVersions.id, draft.id));
     });
     const [accepted] = await db.select().from(planVersions).where(eq(planVersions.id, version.id));

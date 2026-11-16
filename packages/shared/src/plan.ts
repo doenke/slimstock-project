@@ -45,6 +45,10 @@ export interface PlanItem {
   /** User ids of the people working on it. */
   assignees: string[];
   internal: boolean;
+  /** Planned effort per project role id, in minutes (1 day = 480). Part of the version. */
+  efforts: Record<string, number>;
+  /** Estimated remaining effort per role (minutes); missing = plan − actual. Actual data like progress. */
+  remaining: Record<string, number>;
   /** Optimistic locking: every change raises it. */
   rev: number;
 }
@@ -65,9 +69,27 @@ export interface PlanSettings {
   projectStart: string | null;
   /** Resource levelling (one person, one task at a time). */
   level: boolean;
+  /** A task without a given duration takes as long as its largest role effort divided by the people on it. */
+  durationFromEffort: boolean;
+  /** What customers see of the effort estimation. */
+  effortView: EffortView;
+  /** Forecast above budget by more than these percentages: yellow, red. */
+  warnPct: number;
+  critPct: number;
 }
 
-export const DEFAULT_PLAN_SETTINGS: PlanSettings = { workDays: [1, 2, 3, 4, 5], projectStart: null, level: false };
+export const EFFORT_VIEWS = ['none', 'customer', 'plan', 'full'] as const;
+export type EffortView = (typeof EFFORT_VIEWS)[number];
+
+export const DEFAULT_PLAN_SETTINGS: PlanSettings = {
+  workDays: [1, 2, 3, 4, 5],
+  projectStart: null,
+  level: false,
+  durationFromEffort: false,
+  effortView: 'plan',
+  warnPct: 5,
+  critPct: 10,
+};
 
 export function planSettingsOf(raw: unknown): PlanSettings {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -78,6 +100,12 @@ export function planSettingsOf(raw: unknown): PlanSettings {
     workDays: days.length ? days : DEFAULT_PLAN_SETTINGS.workDays,
     projectStart: isDate(o.projectStart) ? o.projectStart : null,
     level: o.level === true,
+    durationFromEffort: o.durationFromEffort === true,
+    effortView: (EFFORT_VIEWS as readonly unknown[]).includes(o.effortView)
+      ? (o.effortView as EffortView)
+      : DEFAULT_PLAN_SETTINGS.effortView,
+    warnPct: typeof o.warnPct === 'number' && o.warnPct >= 0 ? o.warnPct : DEFAULT_PLAN_SETTINGS.warnPct,
+    critPct: typeof o.critPct === 'number' && o.critPct >= 0 ? o.critPct : DEFAULT_PLAN_SETTINGS.critPct,
   };
 }
 
@@ -305,6 +333,8 @@ export function computePlan(
   rootId: string,
   settings: PlanSettings,
   fallbackStart?: string | null,
+  /** Project roles of each person (for "duration from effort"). */
+  rolesOfUser?: Map<string, string[]>,
 ): ComputedPlan {
   const tree = new PlanTree(items, subprojects, rootId);
   const links = leafLinks(tree);
@@ -317,7 +347,7 @@ export function computePlan(
       id: r.item.key,
       start: r.item.pm.start,
       end: r.item.pm.end,
-      dur: r.item.pm.dur,
+      dur: r.item.pm.dur ?? (settings.durationFromEffort ? durationFromEffort(r.item, rolesOfUser) : undefined),
       milestone: r.item.pm.milestone,
       notBefore: r.item.pm.notBefore,
       deadline: r.item.pm.deadline,
@@ -376,6 +406,16 @@ export function computePlan(
   const total = rollup(tree.rows.filter((r) => !r.parentRow).map((r) => r.id));
   if (total) total.duration = spanMinutes(total.start, total.end, settings.workDays);
   return { tree, rows: tree.rows, byRow, total, projectStart };
+}
+
+/** Duration from effort: the role that takes longest, its effort shared by the people on the task with that role. */
+export function durationFromEffort(item: PlanItem, rolesOfUser?: Map<string, string[]>): PmValue<number> | undefined {
+  let longest = 0;
+  for (const [role, minutes] of Object.entries(item.efforts)) {
+    const people = item.assignees.filter((u) => rolesOfUser?.get(u)?.includes(role)).length;
+    longest = Math.max(longest, minutes / Math.max(1, people));
+  }
+  return longest > 0 ? { v: Math.ceil(longest), src: 'calc' } : undefined;
 }
 
 function spanMinutes(start: string, end: string, workDays: number[]): number {
@@ -495,7 +535,8 @@ export function allowedDepTypes(tree: PlanTree, pred: string, succ: string): rea
 // ---------------------------------------------------------------------------------------------------------
 // Comparing two versions
 
-export type DiffField = 'title' | 'start' | 'end' | 'duration' | 'milestone' | 'deps' | 'assignees' | 'place' | 'internal' | 'deadline';
+export type DiffField =
+  'title' | 'start' | 'end' | 'duration' | 'milestone' | 'deps' | 'assignees' | 'place' | 'internal' | 'deadline' | 'effort';
 
 export interface DiffRow {
   key: string;
@@ -505,6 +546,8 @@ export interface DiffRow {
   /** Working days the start / end moved (positive = later); null when not comparable. */
   startShift: number | null;
   endShift: number | null;
+  /** Change of planned effort per role (minutes; only roles that changed). */
+  effortDelta: Record<string, number>;
   from?: { start: string; end: string; title: string };
   to?: { start: string; end: string; title: string };
 }
@@ -513,6 +556,27 @@ export interface PlanDiff {
   rows: DiffRow[];
   /** Project end before and after, and the shift in working days. */
   end: { from: string | null; to: string | null; shift: number | null };
+  /** Planned effort per role before and after (minutes). */
+  effort: { from: Record<string, number>; to: Record<string, number> };
+}
+
+/** Per role: b − a, only where it differs. */
+export function roleDelta(a: Record<string, number>, b: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const r of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const d = (b[r] ?? 0) - (a[r] ?? 0);
+    if (d !== 0) out[r] = d;
+  }
+  return out;
+}
+
+function planEffort(items: Iterable<PlanItem>, tree: PlanTree): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const i of items) {
+    if (tree.isSummary(i.key)) continue;
+    for (const [r, m] of Object.entries(i.efforts)) out[r] = (out[r] ?? 0) + m;
+  }
+  return out;
 }
 
 /** Signed working days from one date to another (Monday → Tuesday = 1; across a weekend only workdays count). */
@@ -552,6 +616,7 @@ export function diffPlans(base: ComputedPlan, next: ComputedPlan, workDays: numb
         fields: [],
         startShift: null,
         endShift: null,
+        effortDelta: roleDelta({}, now.efforts),
         to: c && { start: c.start, end: c.end, title: now.title },
       });
       continue;
@@ -567,6 +632,8 @@ export function diffPlans(base: ComputedPlan, next: ComputedPlan, workDays: numb
     if (was.parentKey !== now.parentKey || was.subprojectId !== now.subprojectId) fields.push('place');
     if (was.internal !== now.internal) fields.push('internal');
     if ((was.pm.deadline ?? null) !== (now.pm.deadline ?? null)) fields.push('deadline');
+    const effortDelta = roleDelta(was.efforts, now.efforts);
+    if (Object.keys(effortDelta).length) fields.push('effort');
     if (fields.length) {
       rows.push({
         key: now.key,
@@ -575,6 +642,7 @@ export function diffPlans(base: ComputedPlan, next: ComputedPlan, workDays: numb
         fields,
         startShift: shift(b?.start, c?.start),
         endShift: shift(b?.end, c?.end),
+        effortDelta,
         from: b && { start: b.start, end: b.end, title: was.title },
         to: c && { start: c.start, end: c.end, title: now.title },
       });
@@ -590,13 +658,18 @@ export function diffPlans(base: ComputedPlan, next: ComputedPlan, workDays: numb
       fields: [],
       startShift: null,
       endShift: null,
+      effortDelta: roleDelta(r.item.efforts, {}),
       from: b && { start: b.start, end: b.end, title: r.item.title },
     });
   }
   const from = base.total?.end ?? null;
   const to = next.total?.end ?? null;
-  return { rows, end: { from, to, shift: from && to ? workdayShift(from, to, workDays) : null } };
+  return {
+    rows,
+    end: { from, to, shift: from && to ? workdayShift(from, to, workDays) : null },
+    effort: { from: planEffort(base.tree.items.values(), base.tree), to: planEffort(next.tree.items.values(), next.tree) },
+  };
 }
 
 /** Fields that describe what happened, not what is planned: they go along when a draft is accepted. */
-export const ACTUAL_FIELDS = ['progress', 'actualStart', 'actualEnd'] as const;
+export const ACTUAL_FIELDS = ['progress', 'actualStart', 'actualEnd', 'remaining'] as const;

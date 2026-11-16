@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { get } from '../api';
 import { Dialog, ErrorText, Field, Loading, PageError, useLoad, useSubmit } from '../components/ui';
 import { navigate, useLocation } from '../router';
+import i18n from '../i18n';
 import { DiffPanel } from './DiffPanel';
+import { BudgetPanel, EffortTable, fmtDays, type EffortMode } from './EffortView';
 import { VersionBar, versionLabel } from './VersionBar';
 import { formatDate } from '../format';
 import { ItemPanel } from './ItemPanel';
@@ -14,7 +16,7 @@ import { daysText } from './text';
 import { loadSet, loadValue, saveSet, saveValue, usePlan, visibleRows } from './usePlan';
 import './plan.css';
 
-type Mode = 'gantt' | 'table';
+type Mode = 'gantt' | 'table' | 'effort';
 
 /** The project plan of a project (on a subproject: the whole plan, filtered to that subproject). */
 export function PlanView({ projectId, rootId }: { projectId: string; rootId: string }) {
@@ -31,7 +33,8 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
   // A draft is compared with the working version unless chosen otherwise ("none" switches it off).
   const compareId = compareParam === 'none' ? null : (compareParam ?? (shown && shown.kind !== 'working' ? (working?.id ?? null) : null));
   const { plan, tree, error, notice, setNotice, run, reload } = usePlan(projectId, versionParam, versions ? compareId : null);
-  const [mode, setMode] = useState<Mode>(() => loadValue('spm:plan-mode', ['gantt', 'table'], 'gantt'));
+  const [mode, setMode] = useState<Mode>(() => loadValue('spm:plan-mode', ['gantt', 'table', 'effort'], 'gantt'));
+  const [effortMode, setEffortMode] = useState<EffortMode>(() => loadValue('spm:effort-mode', ['plan', 'actual'], 'plan'));
   const [zoom, setZoom] = useState<Zoom>(() => loadValue('spm:plan-zoom', ['day', 'week'], 'day'));
   const [collapsed, setCollapsed] = useState(() => loadSet(`spm:plan-collapsed:${rootId}`));
   const [selected, setSelected] = useState<string | null>(null);
@@ -156,17 +159,19 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
       )}
       <div className="plan-toolbar">
         <div className="segmented" role="group" aria-label={t('plan.view')}>
-          {(['gantt', 'table'] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={m === mode ? 'active' : ''}
-              aria-pressed={m === mode}
-              onClick={() => (setMode(m), saveValue('spm:plan-mode', m))}
-            >
-              {t(`plan.mode.${m}`)}
-            </button>
-          ))}
+          {(['gantt', 'table', 'effort'] as const)
+            .filter((m) => m !== 'effort' || plan.effort)
+            .map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={m === mode ? 'active' : ''}
+                aria-pressed={m === mode}
+                onClick={() => (setMode(m), saveValue('spm:plan-mode', m))}
+              >
+                {t(`plan.mode.${m}`)}
+              </button>
+            ))}
         </div>
         {mode === 'gantt' && (
           <div className="segmented" role="group" aria-label={t('plan.zoom')}>
@@ -183,6 +188,21 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
             ))}
           </div>
         )}
+        {mode === 'effort' && plan.effort?.withActual && (
+          <div className="segmented" role="group" aria-label={t('effort.mode')}>
+            {(['plan', 'actual'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={m === effortMode ? 'active' : ''}
+                aria-pressed={m === effortMode}
+                onClick={() => (setEffortMode(m), saveValue('spm:effort-mode', m))}
+              >
+                {t(`effort.view.${m}`)}
+              </button>
+            ))}
+          </div>
+        )}
         {isSub && (
           <label className="check small">
             <input type="checkbox" checked={wholePlan} onChange={(e) => setWholePlan(e.target.checked)} />
@@ -194,6 +214,16 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
           <span className="muted small plan-total">
             {formatDate(plan.total.start)} – {formatDate(plan.total.end)} · {daysText(t, plan.total.duration)} · {plan.total.progress} %
           </span>
+        )}
+        {plan.effort && (
+          <a
+            className="button small"
+            href={`/api/projects/${projectId}/plan/export.xlsx?version=${plan.version.id}&lang=${i18n.language}`}
+            // Same name as the server sends; browsers do not always take it from the header.
+            download={`${plan.project.name.replace(/[^\p{L}\p{N}_-]+/gu, '_')}_V${plan.version.no}.xlsx`}
+          >
+            ⤓ {t('effort.export')}
+          </a>
         )}
         {plan.rights.editSettings && (
           <button type="button" className="small" onClick={() => setSettingsOpen(true)}>
@@ -259,6 +289,26 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
                   : undefined
               }
             />
+          ) : mode === 'effort' && plan.effort ? (
+            <>
+              <EffortTable
+                plan={plan}
+                rows={rows}
+                collapsed={collapsed}
+                onToggle={toggle}
+                selected={selected}
+                onSelect={setSelected}
+                mode={plan.effort.withActual ? effortMode : 'plan'}
+                onSave={(key, patch) => void save(key, patch)}
+              />
+              {plan.effort.withActual && totalOrphan(plan) > 0 && (
+                <p className="muted small">{t('effort.orphan', { days: fmtDays(totalOrphan(plan)) })}</p>
+              )}
+              <BudgetPanel
+                plan={plan}
+                onBilling={(unitId, billing) => void run('POST', `/api/plan-versions/${vid}/billing`, { unitId, billing })}
+              />
+            </>
           ) : (
             <PlanTable plan={plan} rows={rows} collapsed={collapsed} onToggle={toggle} selected={selected} onSelect={setSelected} />
           )}
@@ -272,6 +322,7 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
             onSave={save}
             onSelect={setSelected}
             onClose={() => setSelected(null)}
+            onChanged={() => void reload()}
             actions={rowActions}
           />
         )}
@@ -302,9 +353,21 @@ function SettingsDialog({
   const [workDays, setWorkDays] = useState(plan.settings.workDays);
   const [projectStart, setProjectStart] = useState(plan.settings.projectStart ?? '');
   const [level, setLevel] = useState(plan.settings.level);
+  const [durationFromEffort, setDurationFromEffort] = useState(plan.settings.durationFromEffort);
+  const [effortView, setEffortView] = useState(plan.settings.effortView);
+  const [warnPct, setWarnPct] = useState(String(plan.settings.warnPct));
+  const [critPct, setCritPct] = useState(String(plan.settings.critPct));
   const { error, onSubmit, setError } = useSubmit(async () => {
     if (!workDays.length) return setError('validation');
-    onSaved({ workDays, projectStart: projectStart || null, level });
+    onSaved({
+      workDays,
+      projectStart: projectStart || null,
+      level,
+      durationFromEffort,
+      effortView,
+      warnPct: Number(warnPct) || 0,
+      critPct: Number(critPct) || 0,
+    });
   });
   const dayName = (d: number) =>
     new Intl.DateTimeFormat(i18n.language, { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 10, 15 + d)));
@@ -337,6 +400,31 @@ function SettingsDialog({
           {t('plan.levelLabel')}
         </label>
         <p className="muted small">{t('plan.levelHint')}</p>
+        <fieldset>
+          <legend>{t('effort.settingsTitle')}</legend>
+          <label className="check">
+            <input type="checkbox" checked={durationFromEffort} onChange={(e) => setDurationFromEffort(e.target.checked)} />
+            {t('effort.durationFromEffortLabel')}
+          </label>
+          <p className="muted small">{t('effort.durationFromEffortHint')}</p>
+          <Field label={t('effort.effortViewLabel')}>
+            <select value={effortView} onChange={(e) => setEffortView(e.target.value as typeof effortView)}>
+              {(['none', 'customer', 'plan', 'full'] as const).map((v) => (
+                <option key={v} value={v}>
+                  {t(`effort.effortView.${v}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div className="grid2">
+            <Field label={t('effort.warnPct')}>
+              <input type="number" min={0} value={warnPct} onChange={(e) => setWarnPct(e.target.value)} />
+            </Field>
+            <Field label={t('effort.critPct')}>
+              <input type="number" min={0} value={critPct} onChange={(e) => setCritPct(e.target.value)} />
+            </Field>
+          </div>
+        </fieldset>
         <ErrorText code={error} />
         <div className="actions">
           <button type="button" onClick={onClose}>
@@ -347,4 +435,10 @@ function SettingsDialog({
       </form>
     </Dialog>
   );
+}
+
+/** Actual days booked on tasks that are not in this version. */
+function totalOrphan(plan: PlanPayload): number {
+  const keys = new Set(plan.items.map((i) => i.key));
+  return plan.effort?.entries.filter((e) => !keys.has(e.itemKey)).reduce((s, e) => s + e.minutes, 0) ?? 0;
 }

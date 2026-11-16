@@ -17,6 +17,7 @@
     "@node-rs/argon2": "^2.0.2",
     "@spm/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
+    "exceljs": "4.4.0",
     "fastify": "^5.12.8",
     "postgres": "^4.1.0",
     "zod": "^4.6.7"

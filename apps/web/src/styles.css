@@ -183,7 +183,8 @@ input:disabled {
   background: var(--surface-2);
   color: var(--muted);
 }
-input[type='checkbox'] {
+input[type='checkbox'],
+input[type='radio'] {
   width: auto;
   accent-color: var(--primary);
 }

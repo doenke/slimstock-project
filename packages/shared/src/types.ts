@@ -1,3 +1,4 @@
+import type { Billing, EffortEntry, EffortRow, UnitBudget } from './effort.js';
 import type { PlanDiff, PlanItem, PlanSettings, PlanSubproject, RowPlan } from './plan.js';
 import type { Language, LocalizedText } from './languages.js';
 import type { PermissionLevel, Rights, Side } from './permissions.js';
@@ -105,12 +106,29 @@ export interface PlanPayload {
   projectStart: string;
   people: PlanPerson[];
   rights: { edit: boolean; editSettings: boolean; createDraft: boolean; manageVersions: boolean };
+  /** Effort estimation as far as the user may see it (null: nothing). */
+  effort: PlanEffort | null;
   /** With ?compare=<version>: the other version's dates per row and what changed (from it to this one). */
   compare: {
     version: PlanVersionInfo;
     computed: Record<string, { start: string; end: string; milestone: boolean }>;
     diff: PlanDiff;
   } | null;
+}
+
+export interface PlanEffort {
+  /** Roles shown as columns (calculated roles, Slimstock first, in list order). */
+  roleIds: string[];
+  byRow: Record<string, EffortRow>;
+  total: EffortRow;
+  /** Actual numbers and forecast are included. */
+  withActual: boolean;
+  /** Bookings (only with actual numbers). */
+  entries: (EffortEntry & { userName: string })[];
+  /** Budget per billing unit (Slimstock days; only for Slimstock and with actual numbers). */
+  budgets: UnitBudget[];
+  /** How each unit is billed in this version (unit id → terms). */
+  terms: Record<string, { billing: Billing; budget: Record<string, number> | null }>;
 }
 
 export type VersionKind = 'working' | 'draft' | 'history';
@@ -140,6 +158,8 @@ export interface AcceptPreview {
   carried: { key: string; title: string; fields: string[] }[];
   /** Planning changes made in the working version since the draft was started – they are not taken over. */
   lost: PlanDiff['rows'];
+  /** Fixed-price units whose Slimstock effort differs from the agreed budget: change request or not? */
+  fixedPrice: { unitId: string; budget: number | null; plan: number }[];
   /** What the draft changes compared to the current working version. */
   diff: PlanDiff;
 }

@@ -12,6 +12,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../format';
 import { Link } from '../router';
+import { EffortSection } from './EffortSection';
 import { conflictTexts, daysText } from './text';
 
 interface Props {
@@ -21,6 +22,8 @@ interface Props {
   onSave: (key: string, patch: Record<string, unknown>) => Promise<void>;
   onSelect: (id: string) => void;
   onClose: () => void;
+  /** Bookings changed: reload the plan. */
+  onChanged: () => void;
   actions: ReactNode;
 }
 
@@ -54,7 +57,7 @@ function CommitInput({
 const DEP_TYPES: DepType[] = ['FS', 'SS', 'FF', 'SF'];
 
 /** Details of the selected row: edit a task (or phase), or see a subproject's summary. */
-export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, actions }: Props) {
+export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, onChanged, actions }: Props) {
   const { t } = useTranslation();
   const c = plan.computed[rowId];
   const edit = plan.rights.edit;
@@ -72,6 +75,7 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, action
         </header>
         <p className="muted small">{t('plan.subprojectRow')}</p>
         <Summary c={c} />
+        <EffortSection plan={plan} rowId={rowId} item={null} summary onSave={() => {}} onChanged={onChanged} />
         <p>
           <Link to={`/projects/${sub.id}`}>{t('plan.openSubproject')}</Link>
         </p>
@@ -219,6 +223,8 @@ export function ItemPanel({ plan, tree, rowId, onSave, onSelect, onClose, action
           </div>
         </>
       )}
+
+      <EffortSection plan={plan} rowId={rowId} item={item} summary={summary} onSave={save} onChanged={onChanged} />
 
       <Links plan={plan} tree={tree} item={item} edit={edit} onSave={(deps) => pm({ deps })} onSelect={onSelect} />
 

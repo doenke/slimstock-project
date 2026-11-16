@@ -163,6 +163,10 @@ export const UpdatePlanItemInput = z.object({
   actualEnd: planDate.nullable().optional(),
   assignees: z.array(z.uuid()).max(50).optional(),
   internal: z.boolean().optional(),
+  /** Planned effort per role in minutes; null removes a role. */
+  efforts: z.record(z.uuid(), minutes.nullable()).optional(),
+  /** Remaining effort per role in minutes; null = back to "plan − actual". */
+  remaining: z.record(z.uuid(), minutes.nullable()).optional(),
 });
 
 export const MovePlanRowInput = z.object({
@@ -177,7 +181,30 @@ export const PlanSettingsInput = z.object({
   workDays: z.array(z.number().int().min(0).max(6)).min(1).max(7).optional(),
   projectStart: planDate.nullable().optional(),
   level: z.boolean().optional(),
+  durationFromEffort: z.boolean().optional(),
+  effortView: z.enum(['none', 'customer', 'plan', 'full']).optional(),
+  warnPct: z.number().min(0).max(1000).optional(),
+  critPct: z.number().min(0).max(1000).optional(),
 });
+
+export const EffortEntryInput = z.object({
+  itemKey: z.uuid(),
+  userId: z.uuid(),
+  roleId: z.uuid(),
+  date: planDate,
+  minutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(30 * 480),
+  note: optionalText(500),
+});
+export const UpdateEffortEntryInput = EffortEntryInput.omit({ itemKey: true }).partial();
+
+export const BillingInput = z.object({ unitId: z.uuid(), billing: z.enum(['tm', 'fixed']) });
+
+/** Per fixed-price unit whose effort changed: true = change request (budget follows the plan). */
+export const AcceptInput = z.object({ changeRequests: z.record(z.uuid(), z.boolean()).default({}) });
 
 export const CreateDraftInput = z.object({
   /** Copy of this version; default: the working version. */

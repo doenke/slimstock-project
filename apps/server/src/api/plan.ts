@@ -6,8 +6,15 @@ import {
   PlanTree,
   UpdatePlanItemInput,
   allowedDepTypes,
+  computeEffort,
   computePlan,
   diffPlans,
+  planByUnit,
+  unitBudgets,
+  type EffortEntry,
+  type EffortRow,
+  type EffortView,
+  type UnitBudget,
   hasCycle,
   insertPosition,
   moveInTree,
@@ -24,7 +31,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
-import { memberships, planItems, planVersions, projects, users } from '../db/schema.js';
+import { effortEntries, memberRoles, memberships, planItems, planVersions, projectRoles, projects, users } from '../db/schema.js';
 import { chainOf, levelsForUser, loadTree, type ProjectNode } from './access.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 
@@ -38,7 +45,7 @@ function rootOf(tree: Map<string, ProjectNode>, projectId: string): string {
 }
 
 /** All subprojects below a root, any depth. */
-function subprojectIds(tree: Map<string, ProjectNode>, rootId: string): string[] {
+export function subprojectIds(tree: Map<string, ProjectNode>, rootId: string): string[] {
   return [...tree.keys()].filter((id) => id !== rootId && rootOf(tree, id) === rootId);
 }
 
@@ -67,6 +74,8 @@ const toItem = (r: ItemRow): PlanItem => ({
   actualEnd: r.actualEnd,
   assignees: r.assignees,
   internal: r.internal,
+  efforts: r.efforts ?? {},
+  remaining: r.remaining ?? {},
   rev: r.rev,
 });
 
@@ -101,7 +110,47 @@ export async function computeVersion(db: DbOrTx, ctx: Context, version: VersionR
   const subprojects = await loadSubprojects(db, ctx, version);
   const items = await allItems(db, version.id);
   const settings = planSettingsOf(ctx.root.settings);
-  return { items, subprojects, settings, plan: computePlan(items, subprojects, ctx.rootId, settings, ctx.root.startDate) };
+  const rolesOfUser = settings.durationFromEffort ? await memberRolesOf(db, ctx) : undefined;
+  return { items, subprojects, settings, plan: computePlan(items, subprojects, ctx.rootId, settings, ctx.root.startDate, rolesOfUser) };
+}
+
+/** Project roles of every person on the project (any project of the tree). */
+export async function memberRolesOf(db: DbOrTx, ctx: Context): Promise<Map<string, string[]>> {
+  const tree = [ctx.rootId, ...subprojectIds(ctx.tree, ctx.rootId)];
+  const rows = await db
+    .select({ userId: memberships.userId, roleId: memberRoles.roleId })
+    .from(memberRoles)
+    .innerJoin(memberships, eq(memberships.id, memberRoles.membershipId))
+    .where(inArray(memberships.projectId, tree));
+  const out = new Map<string, string[]>();
+  for (const r of rows) out.set(r.userId, [...new Set([...(out.get(r.userId) ?? []), r.roleId])]);
+  return out;
+}
+
+/** Calculated roles in column order (Slimstock first), plus inactive ones that still carry effort. */
+export async function effortRoles(db: DbOrTx): Promise<(typeof projectRoles.$inferSelect)[]> {
+  const rows = await db.select().from(projectRoles).orderBy(asc(projectRoles.sort));
+  return rows.filter((r) => r.calculated).sort((a, b) => (a.side === b.side ? a.sort - b.sort : a.side === 'slimstock' ? -1 : 1));
+}
+
+/** Bookings of a project with the person's name. */
+export async function loadEntries(db: DbOrTx, rootId: string): Promise<(EffortEntry & { userName: string })[]> {
+  const rows = await db
+    .select({ e: effortEntries, userName: users.name })
+    .from(effortEntries)
+    .innerJoin(users, eq(users.id, effortEntries.userId))
+    .where(eq(effortEntries.projectId, rootId))
+    .orderBy(asc(effortEntries.date), asc(effortEntries.createdAt));
+  return rows.map(({ e, userName }) => ({
+    id: e.id,
+    itemKey: e.itemKey,
+    userId: e.userId,
+    roleId: e.roleId,
+    date: e.date,
+    minutes: e.minutes,
+    note: e.note,
+    userName,
+  }));
 }
 
 /** Whether the user sees internal content somewhere in this plan (Slimstock people). */
@@ -180,6 +229,57 @@ export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, versi
     .map((i) => ({ ...i, pm: { ...i.pm, deps: Object.fromEntries(Object.entries(i.pm.deps).filter(([k]) => keys.has(k))) } }));
   const computedOut = Object.fromEntries([...computed.byRow].filter(([id]) => rowIds.has(id)));
 
+  // Effort: Slimstock sees everything; customers what the project setting allows, on the rows they see.
+  const internalOk = seesInternal(ctx);
+  const view: EffortView = internalOk ? 'full' : settings.effortView;
+  const roles = await effortRoles(db);
+  const shownRoles = roles.filter((r) => (view === 'customer' ? r.side === 'customer' : view !== 'none'));
+  const shownRoleIds = new Set(shownRoles.map((r) => r.id));
+  const pick = (m: Record<string, number>) => Object.fromEntries(Object.entries(m).filter(([r]) => shownRoleIds.has(r)));
+  const withActual = view === 'full';
+  for (const i of visible) {
+    i.efforts = pick(i.efforts);
+    i.remaining = withActual ? pick(i.remaining) : {};
+  }
+  let effort: PlanPayload['effort'] = null;
+  if (view !== 'none') {
+    const visTree = internalOk && rootView ? computed.tree : new PlanTree(visible, visibleSubs, ctx.rootId);
+    const allEntries = withActual ? await loadEntries(db, ctx.rootId) : [];
+    const entries = allEntries.filter((e) => shownRoleIds.has(e.roleId) && (internalOk && rootView ? true : keys.has(e.itemKey)));
+    const result = computeEffort(visTree, entries);
+    const strip = (r: EffortRow): EffortRow =>
+      withActual
+        ? { plan: pick(r.plan), actual: pick(r.actual), remaining: pick(r.remaining), forecast: pick(r.forecast) }
+        : { plan: pick(r.plan), actual: {}, remaining: {}, forecast: {} };
+    const slimstockRoles = new Set(roles.filter((r) => r.side === 'slimstock').map((r) => r.id));
+    let budgets: UnitBudget[] = [];
+    if (withActual) {
+      const working =
+        version.kind === 'working'
+          ? computed.tree
+          : (await computeVersion(db, ctx, await workingVersion(db, ctx.rootId, user.id))).plan.tree;
+      budgets = unitBudgets({
+        tree: visTree,
+        entries,
+        terms: version.terms,
+        slimstockRoles,
+        workingPlan: planByUnit(working, slimstockRoles),
+        warnPct: settings.warnPct,
+        critPct: settings.critPct,
+      }).filter((b) => (b.unitId === ctx.rootId ? rootView : visibleSubs.some((s) => s.id === b.unitId)));
+    }
+    const usedRoles = new Set([...Object.keys(result.total.plan), ...Object.keys(result.total.actual)]);
+    effort = {
+      roleIds: shownRoles.filter((r) => r.active || usedRoles.has(r.id)).map((r) => r.id),
+      byRow: Object.fromEntries([...result.byRow].filter(([id]) => rowIds.has(id)).map(([id, r]) => [id, strip(r)])),
+      total: strip(result.total),
+      withActual,
+      entries: internalOk ? entries : [],
+      budgets,
+      terms: Object.fromEntries(Object.entries(version.terms).map(([u, t]) => [u, { billing: t.billing, budget: t.budget ?? null }])),
+    };
+  }
+
   let compare: PlanPayload['compare'] = null;
   if (compareId && compareId !== version.id) {
     const [other] = await db
@@ -192,6 +292,13 @@ export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, versi
     const diff = diffPlans(base, computed, settings.workDays);
     diff.rows = diff.rows.filter((r) => (r.kind === 'removed' ? baseVis.keys.has(r.key) : keys.has(r.key)));
     if (!rootView) diff.end = { from: null, to: null, shift: null };
+    // Effort changes only as far as the user may see effort.
+    diff.effort = view === 'none' || !rootView ? { from: {}, to: {} } : { from: pick(diff.effort.from), to: pick(diff.effort.to) };
+    for (const r of diff.rows) {
+      r.effortDelta = view === 'none' ? {} : pick(r.effortDelta);
+      if (!Object.keys(r.effortDelta).length) r.fields = r.fields.filter((f) => f !== 'effort');
+    }
+    diff.rows = diff.rows.filter((r) => r.kind !== 'changed' || r.fields.length);
     compare = {
       version: await versionInfo(db, other, base.total?.end ?? null),
       computed: Object.fromEntries(
@@ -227,6 +334,7 @@ export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, versi
       createDraft: rootRights.editPlan,
       manageVersions: rootRights.manageVersions,
     },
+    effort,
     compare,
   };
 }
@@ -345,6 +453,21 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
         }
         next.assignees = ids;
       }
+      for (const field of ['efforts', 'remaining'] as const) {
+        const patch = input[field];
+        if (!patch) continue;
+        const roleIds = Object.keys(patch);
+        if (roleIds.length) {
+          const known = await tx.select({ id: projectRoles.id }).from(projectRoles).where(inArray(projectRoles.id, roleIds));
+          if (known.length !== roleIds.length) throw new ApiError(400, 'unknown_role');
+        }
+        const map = { ...next[field] };
+        for (const [r, v] of Object.entries(patch)) {
+          if (v === null || (field === 'efforts' && v === 0)) delete map[r];
+          else map[r] = v;
+        }
+        next[field] = map;
+      }
       if (input.pm) {
         next.pm = patchPm(current.pm, input.pm);
         if (input.pm.deps) {
@@ -374,6 +497,8 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
           actualEnd: next.actualEnd,
           assignees: next.assignees,
           internal: next.internal,
+          efforts: next.efforts,
+          remaining: next.remaining,
           rev: current.rev + 1,
           updatedAt: new Date(),
           updatedBy: request.user.id,

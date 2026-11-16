@@ -1,4 +1,4 @@
-import type { Language, LocalizedText, PermissionLevel, PlanItem, PlanPm, ProjectStatus, Side } from '@spm/shared';
+import type { BillingTerms, Language, LocalizedText, PermissionLevel, PlanItem, PlanPm, ProjectStatus, Side } from '@spm/shared';
 import { sql } from 'drizzle-orm';
 
 import { boolean, date, doublePrecision, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
@@ -138,6 +138,10 @@ export const planVersions = pgTable(
     /** The items of the version a draft was copied from, as they were then (to see later changes there). */
     baseSnapshot: jsonb('base_snapshot').$type<PlanItem[]>(),
     customerVisible: boolean('customer_visible').notNull().default(false),
+    /** Billing per unit (subproject id, or root id for the project-level part). */
+    terms: jsonb('terms').$type<Record<string, BillingTerms>>().notNull().default({}),
+    /** Accepted with a raised fixed-price budget (a change request). */
+    isChangeRequest: boolean('is_change_request').notNull().default(false),
     /** Positions of the subprojects in the plan: { subprojects: { <id>: sort } }. */
     layout: jsonb('layout').$type<{ subprojects?: Record<string, number> }>().notNull().default({}),
     createdBy: uuid('created_by').references(() => users.id),
@@ -173,6 +177,10 @@ export const planItems = pgTable(
     actualEnd: date('actual_end'),
     assignees: jsonb('assignees').$type<string[]>().notNull().default([]),
     internal: boolean('internal').notNull().default(false),
+    /** Planned effort per role id (minutes). */
+    efforts: jsonb('efforts').$type<Record<string, number>>().notNull().default({}),
+    /** Remaining effort per role id (minutes), where estimated by hand. */
+    remaining: jsonb('remaining').$type<Record<string, number>>().notNull().default({}),
     rev: integer('rev').notNull().default(1),
     origin: jsonb('origin'),
     createdAt: createdAt(),
@@ -180,4 +188,28 @@ export const planItems = pgTable(
     updatedBy: uuid('updated_by').references(() => users.id),
   },
   (t) => [uniqueIndex('plan_items_version_key_idx').on(t.versionId, t.key)],
+);
+
+/** Actual effort, booked by hand per task (by key, so it holds for every version). */
+export const effortEntries = pgTable(
+  'effort_entries',
+  {
+    id: id(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    itemKey: uuid('item_key').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    roleId: uuid('role_id')
+      .notNull()
+      .references(() => projectRoles.id),
+    date: date('date').notNull(),
+    minutes: integer('minutes').notNull(),
+    note: text('note'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [index('effort_entries_project_idx').on(t.projectId, t.itemKey)],
 );

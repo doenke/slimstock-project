@@ -269,7 +269,8 @@
     "view": "View",
     "mode": {
       "gantt": "Gantt",
-      "table": "Table"
+      "table": "Table",
+      "effort": "Estimate"
     },
     "zoom": "Time scale",
     "zoomLevel": {
@@ -370,7 +371,84 @@
       "assignees": "who",
       "place": "position",
       "internal": "internal",
-      "deadline": "deadline"
+      "deadline": "deadline",
+      "effort": "effort"
     }
+  },
+  "effort": {
+    "mode": "Estimate",
+    "total": "Total",
+    "plan": "Plan",
+    "actual": "Actual",
+    "remaining": "Remaining",
+    "forecast": "Forecast",
+    "budget": "Budget",
+    "deviation": "Deviation",
+    "days": "Days",
+    "date": "Date",
+    "person": "Person",
+    "role": "Role",
+    "note": "Note",
+    "sumSlimstock": "Σ Slimstock",
+    "sumCustomer": "Σ Customer",
+    "view": {
+      "plan": "Plan",
+      "actual": "Actual & forecast"
+    },
+    "noRoles": "There are no estimated project roles – an admin sets them under Administration → Project roles.",
+    "billingLabel": "Billing",
+    "billing": {
+      "tm": "Time and material",
+      "fixed": "Fixed price"
+    },
+    "pending": "Budget is set when the draft is accepted",
+    "budgetTitle": "Budget per billing unit (Slimstock days)",
+    "projectLevel": "Project level",
+    "level": {
+      "ok": "within budget",
+      "warn": "slightly over budget",
+      "crit": "over budget"
+    },
+    "fixedHint": "With a fixed price the budget stays fixed; extra effort is Slimstock's risk.",
+    "effortTitle": "Effort (days per role)",
+    "bookings": "Actual bookings",
+    "addBooking": "Book",
+    "noBookings": "Nothing booked yet.",
+    "deleteBooking": "Delete booking",
+    "confirmDeleteBooking": "Delete this booking?",
+    "remainingHint": "Remaining empty = plan − actual (done tasks: 0).",
+    "planHint": "Days per role, in quarter days.",
+    "phaseHint": "Sum of the tasks inside.",
+    "export": "Excel export",
+    "orphan": "Plus {{days}} actual days on tasks that do not exist in this version.",
+    "readOnlyBookings": "Bookings apply to all versions of the plan.",
+    "fixedTitle": "Fixed-price subprojects with changed effort",
+    "fixedNew": "{{unit}}: new fixed price – the budget is set to {{plan}} days.",
+    "fixedChanged": "{{unit}}: budget {{budget}} days, planned {{plan}} days.",
+    "asChangeRequest": "Change request – raise the budget to the plan",
+    "withinFixed": "Within the fixed price – budget stays",
+    "settingsTitle": "Effort",
+    "durationFromEffortLabel": "Duration from effort",
+    "durationFromEffortHint": "Without a given duration a task takes as long as the role with the most effort – divided by the people with that role on the task.",
+    "effortViewLabel": "What the customer sees of the estimate",
+    "effortView": {
+      "none": "Nothing",
+      "customer": "Only the days of their own people",
+      "plan": "All planned days",
+      "full": "All days with actual and forecast"
+    },
+    "warnPct": "Yellow from (% over budget)",
+    "critPct": "Red from (% over budget)",
+    "changeTotal": "Effort {{from}} → {{to}} days ({{delta}})",
+    "addRole": "Role"
+  },
+  "export": {
+    "sheetPlan": "Plan and effort",
+    "sheetBudget": "Budget",
+    "sheetEntries": "Actual bookings",
+    "unit": "Effort in person days",
+    "unitName": "Billing unit",
+    "sumSlimstock": "Total Slimstock",
+    "sumCustomer": "Total customer"
   }
 }
