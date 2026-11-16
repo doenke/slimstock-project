@@ -43,6 +43,13 @@
       "when": 1794838354186,
       "tag": "0005_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794842647428,
+      "tag": "0006_audit_mail",
+      "breakpoints": true
     }
   ]
 }

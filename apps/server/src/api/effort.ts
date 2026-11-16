@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
 import { effortEntries, memberships, planItems, planVersions, projectRoles } from '../db/schema.js';
+import { audit, versionLabel } from '../audit.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 import { computeVersion, context, effortRoles, isEditable, payload, subprojectIds, type Context } from './plan.js';
 
@@ -49,6 +50,12 @@ export async function effortRoutes(app: FastifyInstance, { db }: { db: Db }) {
       .insert(effortEntries)
       .values({ ...input, projectId: ctx.rootId, createdBy: request.user.id })
       .returning({ id: effortEntries.id });
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: 'effort.booked',
+      details: { minutes: input.minutes, date: input.date },
+    });
     return reply.code(201).send(row);
   });
 
@@ -59,14 +66,21 @@ export async function effortRoutes(app: FastifyInstance, { db }: { db: Db }) {
     const input = parse(UpdateEffortEntryInput, request.body);
     await checkEntry(db, ctx, input);
     await db.update(effortEntries).set(input).where(eq(effortEntries.id, entry.id));
+    await audit(db, { rootId: ctx.rootId, userId: request.user.id, action: 'effort.changed', details: { date: input.date ?? entry.date } });
     return { ok: true };
   });
 
   app.delete<{ Params: { eid: string } }>('/api/effort-entries/:eid', async (request) => {
     const [entry] = await db.select().from(effortEntries).where(eq(effortEntries.id, request.params.eid));
     if (!entry) throw notFound();
-    await forBooking(db, request.user, entry.projectId);
+    const ctx = await forBooking(db, request.user, entry.projectId);
     await db.delete(effortEntries).where(eq(effortEntries.id, entry.id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: 'effort.deleted',
+      details: { minutes: entry.minutes, date: entry.date },
+    });
     return { ok: true };
   });
 
@@ -94,6 +108,13 @@ export async function effortRoutes(app: FastifyInstance, { db }: { db: Db }) {
       terms[unitId] = { billing: 'fixed', budget };
     }
     await db.update(planVersions).set({ terms }).where(eq(planVersions.id, version.id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      projectId: unitId,
+      userId: request.user.id,
+      action: 'effort.billing',
+      details: { billing, version: versionLabel(version) },
+    });
     version.terms = terms;
     return payload(db, request.user, ctx, version, (request.query as { compare?: string }).compare);
   });

@@ -10,6 +10,8 @@ import type { ProjectStatus } from './schemas.js';
 export interface PublicConfig {
   version: string;
   defaultLanguage: Language;
+  /** A mail server is set up (notifications are sent). */
+  mail: boolean;
 }
 
 export interface Me {
@@ -22,6 +24,8 @@ export interface Me {
   /** Own language choice; null = project language. */
   language: Language | null;
   mustChangePassword: boolean;
+  /** Wants e-mail notifications. */
+  notify: boolean;
 }
 
 export interface UserRow {
@@ -220,4 +224,15 @@ export interface MyTask extends Task {
   rootId: string;
   rootName: string;
   statusLabel: string | null;
+}
+
+/** One entry of a project's change log. */
+export interface AuditRow {
+  id: string;
+  at: string;
+  action: string;
+  userName: string | null;
+  userKind: 'staff' | 'customer' | null;
+  projectId: string | null;
+  details: Record<string, unknown>;
 }

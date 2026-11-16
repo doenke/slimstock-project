@@ -7,7 +7,8 @@ import type { SessionStore } from '../auth/sessions.js';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import { memberships, users } from '../db/schema.js';
-import { requireRight } from './access.js';
+import { audit } from '../audit.js';
+import { chainOf, loadTree, requireRight } from './access.js';
 import { ApiError, forbidden, notFound } from './errors.js';
 
 /**
@@ -56,10 +57,19 @@ export async function linkRoutes(app: FastifyInstance, { db, config, sessions }:
     const m = await managed(request.user, request.params.id, request.params.mid);
     const link = await issue(m.id);
     await sessions.destroyAll(m.userId);
+    const ctx = await loadTree(db);
+    const [person] = await db.select({ name: users.name }).from(users).where(eq(users.id, m.userId));
+    await audit(db, {
+      rootId: chainOf(ctx, m.projectId).at(-1)!,
+      projectId: m.projectId,
+      userId: request.user.id,
+      action: 'link.renewed',
+      details: { name: person?.name },
+    });
     return link;
   });
 
-  app.get<{ Params: { token: string } }>('/k/:token', async (request, reply) => {
+  app.get<{ Params: { token: string }; Querystring: { next?: string } }>('/k/:token', async (request, reply) => {
     const wait = limiter.wait('link', request.ip);
     if (wait > 0)
       return reply
@@ -79,6 +89,9 @@ export async function linkRoutes(app: FastifyInstance, { db, config, sessions }:
     const now = new Date();
     await db.update(memberships).set({ linkLastUsedAt: now }).where(eq(memberships.id, row.m.id));
     await db.update(users).set({ lastSeenAt: now }).where(eq(users.id, row.m.userId));
-    return reply.header('Cache-Control', 'no-store').redirect(`/projects/${row.m.projectId}`);
+    // Links in mails point at a page (plan version, task); only project pages of this app are allowed.
+    const next = request.query.next;
+    const target = next && /^\/projects\/[0-9a-f-]{36}(\?[\w=&%.-]*)?$/.test(next) ? next : `/projects/${row.m.projectId}`;
+    return reply.header('Cache-Control', 'no-store').redirect(target);
   });
 }

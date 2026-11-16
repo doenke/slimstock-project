@@ -11,10 +11,11 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 6.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> **Stand: Proof of Concept, Stufe 7 – der POC ist komplett.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
 > Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt), Entwürfe
 > mit Vergleich und Historie, die Aufwandskalkulation, der Kundenzugang per persönlichem Link mit
-> Abstimmung und Kommentaren sowie die Aufgabenliste sind da – siehe [PLAN.md](PLAN.md).
+> Abstimmung und Kommentaren, die Aufgabenliste, das Änderungsprotokoll und Mail-Benachrichtigungen sind da
+> – siehe [PLAN.md](PLAN.md).
 
 | Projektplan | Entwurf im Vergleich | Kalkulation | Aufgaben | Kundensicht |
 | --- | --- | --- | --- | --- |
@@ -52,6 +53,10 @@ Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
   liefert Artikelstammdaten“, „Testzugang einrichten“. Mit Status, Fälligkeit, Priorität, Bereich,
   Personen auf beiden Seiten, Links und Kommentaren – als Tabelle oder Kanban, auf Wunsch mit einem
   Vorgang im Plan verknüpft. **Meine Aufgaben** zeigt jedem, was er über alle Projekte hinweg zu tun hat.
+- **Nichts geht unter** – der **Verlauf** zeigt je Projekt, wer wann was geändert hat. Auf Wunsch gibt
+  es Mails, wenn ein Entwurf zur Abstimmung bereitliegt, der Kunde zustimmt oder ablehnt oder dir
+  eine Aufgabe zugeordnet wird – Kunden bekommen darin ihren persönlichen Link, direkt an die richtige
+  Stelle.
 - **Wer macht was** – jede Person bekommt eine oder mehrere Projektrollen: Projektleiter, Solution
   Architect, Consultant … bei Slimstock, Projektleiter, Key User, IT-Interface … beim Kunden. Die
   Rollenliste pflegst du selbst.
@@ -198,14 +203,30 @@ Aufgabe kann auf einen **Vorgang im Plan** zeigen; der Vorgang listet dann „Au
   Key User & Co. die eigenen und die ihnen zugeordneten. Leser schauen nur zu.
 - **Meine Aufgaben** oben in der Leiste: alles Offene, das dir zugeordnet ist, über alle Projekte.
 
-### 9. Beteiligte eintragen
+### 9. Verlauf und Benachrichtigungen
+
+Im Projekt unter **Verlauf** steht, wer wann was geändert hat – Plan, Versionen, Kalkulation, Aufgaben,
+Beteiligte –, nach Tagen sortiert und nach Bereichen filterbar. Der Kunde sieht dort nur, was er
+ohnehin sehen darf: keine internen Aufgaben, keine Entwürfe, die nicht für ihn freigegeben sind, keine
+Kalkulationsdetails.
+
+Ist ein Mailserver eingerichtet (siehe „Kleine Konfiguration“), verschickt die App Mails, wenn
+- ein Entwurf **zur Abstimmung** geht (an die Projektleitung beim Kunden),
+- der Kunde **zustimmt oder ablehnt** (an die Projektleitung Slimstock),
+- dir jemand eine **Aufgabe zuordnet**.
+
+Mails gehen in der Sprache der Person (sonst der Projektsprache). Kunden bekommen ihren persönlichen
+Link, der direkt beim Entwurf bzw. der Aufgabe landet. Unter **Profil** kann jeder Mails abschalten;
+unter **Verwaltung** schickt sich ein Admin eine Test-Mail.
+
+### 10. Beteiligte eintragen
 
 Im Projekt unter **Beteiligte**: Slimstock-Kollegen aus der Liste wählen, Personen beim Kunden mit
 Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sich aus den Rollen; nur
 wenn es im Einzelfall anders sein soll, stellst du sie direkt ein. Über die E-Mail erkennt die App
 dieselbe Kundenperson in mehreren Projekten wieder.
 
-### 10. Den Kunden einladen
+### 11. Den Kunden einladen
 
 Bei jeder Person auf Kundenseite gibt es den Knopf **🔗 Link**: Er zeigt den persönlichen Link für
 dieses Projekt zum **Kopieren**, **Teilen** oder **per E-Mail senden** (öffnet dein Mailprogramm mit
@@ -231,8 +252,9 @@ bleibt, wie es ist.
 
 ## Was die App (noch) nicht kann
 
-- Die App verschickt selbst keine Mails – den Link teilst du per Kopieren, Teilen oder über dein
-  Mailprogramm.
+- Einladungen verschickt die App nicht selbst – den Link teilst du per Kopieren, Teilen oder über dein
+  Mailprogramm. Mails gibt es nur als Benachrichtigung und nur mit eingerichtetem Mailserver.
+- Keine Live-Aktualisierung: Was andere gleichzeitig ändern, siehst du nach dem Neuladen.
 - Wer den Link hat, ist drin – wie bei einem geteilten Dokument. Gib ihn nur der Person selbst.
 - Aufgaben haben noch keine Dateianhänge und keine Erinnerungs-Mails; Links auf Dateiablagen gehen.
 - Keine Preise und keine Euro – bewusst. Ist-Zeiten kommen noch nicht aus einer Zeiterfassung.
@@ -254,6 +276,7 @@ bleibt, wie es ist.
 | `LINK_KEY` | Optional: verschlüsselt die Kunden-Links in der Datenbank. Leer = aus `SESSION_KEY` abgeleitet. Ändern macht gespeicherte Links unlesbar (sie lassen sich dann nur erneuern). |
 | `POSTGRES_PASSWORD` | Passwort der Datenbank im Compose-Netz. |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Erster Admin, nur beim allerersten Start. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Optional: Mailserver für Benachrichtigungen. Ohne `SMTP_HOST` verschickt die App nichts. |
 | `DEFAULT_LANGUAGE` | `de` oder `en`: Sprache neuer Projekte und der Anmeldeseite. |
 | `TRUSTED_PROXY` | `true` hinter einem Reverse Proxy, damit die Login-Bremse echte Adressen sieht. |
 | `PORT` | Standard `43871`, innen und außen gleich. |

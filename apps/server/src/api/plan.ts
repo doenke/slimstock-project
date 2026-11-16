@@ -45,6 +45,7 @@ import {
   versionReviews,
 } from '../db/schema.js';
 import { chainOf, levelsForUser, loadTree, type ProjectNode } from './access.js';
+import { audit, versionLabel } from '../audit.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 
 export type VersionRow = typeof planVersions.$inferSelect;
@@ -439,6 +440,22 @@ function patchPm(pm: PlanPm, patch: Record<string, unknown>): PlanPm {
 /** Changes answer with the plan as the client shows it (with its comparison, if any). */
 const compareOf = (request: { query: unknown }) => (request.query as { compare?: string } | undefined)?.compare;
 
+/** Plan changes are visible to the customer only in a shared version and on tasks that are not internal. */
+const planEntry = (version: VersionRow, internalItem: boolean) => ({ internal: !version.customerVisible || internalItem });
+
+/** Changed planning fields in the words of the change log. */
+function changedFields(input: Record<string, unknown>): string[] {
+  const out = new Set<string>();
+  for (const [k, v] of Object.entries(input)) {
+    if (k === 'rev' || v === undefined) continue;
+    if (k === 'pm')
+      for (const f of Object.keys(v as object))
+        out.add(f === 'deps' ? 'deps' : f === 'milestone' ? 'milestone' : f === 'deadline' ? 'deadline' : 'dates');
+    else out.add(k);
+  }
+  return [...out];
+}
+
 export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
   app.get<{ Params: { id: string }; Querystring: { version?: string; compare?: string } }>('/api/projects/:id/plan', async (request) => {
     const ctx = await context(db, request.user, request.params.id);
@@ -478,6 +495,7 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
       .update(projects)
       .set({ settings: { ...ctx.root.settings, ...next } })
       .where(eq(projects.id, ctx.rootId));
+    await audit(db, { rootId: ctx.rootId, userId: request.user.id, action: 'plan.settings', details: { fields: Object.keys(input) } });
     const fresh = await context(db, request.user, request.params.id);
     return payload(db, request.user, fresh, await workingVersion(db, ctx.rootId, request.user.id));
   });
@@ -498,6 +516,14 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
       title: input.title,
       pm: input.milestone ? { milestone: true, deps: {} } : { deps: {} },
       updatedBy: request.user.id,
+    });
+    await audit(db, {
+      rootId: ctx.rootId,
+      projectId: pos.subprojectId ?? ctx.rootId,
+      userId: request.user.id,
+      action: 'plan.itemCreated',
+      details: { title: input.title, version: versionLabel(version) },
+      ...planEntry(version, false),
     });
     return reply.code(201).send({ key, plan: await payload(db, request.user, ctx, version, compareOf(request)) });
   });
@@ -581,6 +607,15 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
           updatedBy: request.user.id,
         })
         .where(and(eq(planItems.versionId, version.id), eq(planItems.key, current.key)));
+      await audit(tx, {
+        rootId: ctx.rootId,
+        projectId: current.subprojectId ?? ctx.rootId,
+        userId: request.user.id,
+        action: 'plan.itemUpdated',
+        details: { title: next.title, version: versionLabel(version), fields: changedFields(input) },
+        // Effort and remaining are internal details unless the customer sees the estimate anyway.
+        ...planEntry(version, next.internal || current.internal),
+      });
     });
     return payload(db, request.user, ctx, version, compareOf(request));
   });
@@ -602,6 +637,15 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
           .set({ pm: { ...i.pm, deps }, rev: i.rev + 1 })
           .where(and(eq(planItems.versionId, version.id), eq(planItems.key, i.key)));
       }
+      const item = tree.items.get(request.params.key)!;
+      await audit(tx, {
+        rootId: ctx.rootId,
+        projectId: tree.subOf(item) ?? ctx.rootId,
+        userId: request.user.id,
+        action: 'plan.itemDeleted',
+        details: { title: item.title, version: versionLabel(version), inside: gone.size - 1 },
+        ...planEntry(version, item.internal),
+      });
     });
     return payload(db, request.user, ctx, version, compareOf(request));
   });
@@ -631,6 +675,17 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
           .where(eq(planVersions.id, version.id));
         version.layout = { ...version.layout, subprojects: layout };
       }
+      const moved = input.target.kind === 'item' ? tree.items.get(input.target.key) : undefined;
+      await audit(tx, {
+        rootId: ctx.rootId,
+        userId: request.user.id,
+        action: 'plan.moved',
+        details: {
+          title: moved?.title ?? (input.target.kind === 'subproject' ? tree.subs.get(input.target.id)?.name : ''),
+          version: versionLabel(version),
+        },
+        ...planEntry(version, moved?.internal ?? false),
+      });
     });
     return payload(db, request.user, ctx, version, compareOf(request));
   });

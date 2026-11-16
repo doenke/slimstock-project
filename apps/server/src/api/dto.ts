@@ -11,6 +11,7 @@ export function toMe(u: typeof users.$inferSelect): Me {
     isAdmin: u.isAdmin,
     language: u.language ?? null,
     mustChangePassword: u.mustChangePassword,
+    notify: u.notify,
   };
 }
 

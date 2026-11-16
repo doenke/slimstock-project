@@ -48,6 +48,7 @@ export async function authRoutes(app: FastifyInstance, { db, sessions }: { db: D
         ...(input.name !== undefined && { name: input.name }),
         ...(input.email !== undefined && { email: input.email }),
         ...(input.language !== undefined && { language: input.language }),
+        ...(input.notify !== undefined && { notify: input.notify }),
       })
       .where(eq(users.id, request.user.id))
       .returning();

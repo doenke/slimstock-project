@@ -64,7 +64,10 @@
     "link_only_for_customers": "Links are for customer people only – Slimstock logs in with user name and password.",
     "reason_required": "Please give a reason when rejecting.",
     "unknown_status": "This status does not exist.",
-    "invalid_url": "Please enter an address starting with http:// or https://."
+    "invalid_url": "Please enter an address starting with http:// or https://.",
+    "mail_not_configured": "No mail server is set up.",
+    "no_email": "Enter your e-mail address in your profile first.",
+    "mail_failed": "The mail server did not accept the message."
   },
   "permission": {
     "reader": "Reader",
@@ -106,7 +109,9 @@
   "profile": {
     "title": "Profile",
     "name": "Name",
-    "email": "E-mail"
+    "email": "E-mail",
+    "notify": "E-mail notifications (drafts for review, assigned tasks)",
+    "notifyOff": "Sending mail is not set up on this server."
   },
   "projects": {
     "title": "Projects",
@@ -204,7 +209,10 @@
     "activeLabel": "Active (can log in)",
     "customersIntro": "Customers with running projects.",
     "newCustomer": "New customer",
-    "noCustomers": "No customers yet. They are also created together with a project."
+    "noCustomers": "No customers yet. They are also created together with a project.",
+    "testMail": "Send me a test mail",
+    "testMailSent": "Test mail sent to {{to}}.",
+    "mailOff": "No mail server set up (SMTP_HOST) – the app sends no notifications."
   },
   "plan": {
     "days_one": "{{value}} day",
@@ -559,5 +567,114 @@
     "myTitle": "My tasks",
     "myEmpty": "Nothing open is assigned to you right now. 🎉",
     "linkedTitle": "Related tasks"
+  },
+  "mail": {
+    "greeting": "Hello {{name}},",
+    "footer": "Kind regards\nSlimstock Project Management\n\n(This message is sent automatically. You can switch notifications off in the app under “Profile”.)",
+    "reviewRequested": {
+      "subject": "“{{project}}”: draft {{version}} for review",
+      "body": "in the project “{{project}}” the draft {{version}} is waiting for your review. Look at the changes and approve – or reject with a reason:"
+    },
+    "approved": {
+      "subject": "“{{project}}”: {{name}} approved {{version}}",
+      "body": "{{name}} approved the draft {{version}} in the project “{{project}}”.\nComment: {{comment}}"
+    },
+    "rejected": {
+      "subject": "“{{project}}”: {{name}} rejected {{version}}",
+      "body": "{{name}} rejected the draft {{version}} in the project “{{project}}”.\nReason: {{comment}}"
+    },
+    "taskAssigned": {
+      "subject": "“{{project}}”: new task – {{task}}",
+      "body": "{{name}} assigned you a task in the project “{{project}}”:\n\n{{task}}\nDue: {{due}}"
+    },
+    "test": {
+      "subject": "Test message from Slimstock Project Management",
+      "body": "Sending mail works. 👍"
+    }
+  },
+  "audit": {
+    "title": "History",
+    "intro": "Who changed what when.",
+    "empty": "No entries yet.",
+    "more": "Load older",
+    "someone": "Someone",
+    "area": {
+      "all": "Everything",
+      "project": "Project & people",
+      "plan": "Plan & estimate",
+      "tasks": "Tasks"
+    },
+    "action": {
+      "project_created": "created the project",
+      "project_subprojectCreated": "created the subproject “{{name}}”",
+      "project_updated": "changed the project details",
+      "member_added": "added {{name}}",
+      "member_updated": "changed roles or rights of {{name}}",
+      "member_removed": "removed {{name}}",
+      "link_renewed": "renewed the link of {{name}}",
+      "plan_settings": "changed the plan settings",
+      "plan_itemCreated": "created “{{title}}”",
+      "plan_itemUpdated": "changed “{{title}}”",
+      "plan_itemDeleted": "deleted “{{title}}”",
+      "plan_moved": "moved “{{title}}”",
+      "version_created": "created the draft {{version}}",
+      "version_renamed": "renamed {{version}}",
+      "version_in_review": "handed {{version}} over for review",
+      "version_editing": "took {{version}} back for editing",
+      "version_discarded": "discarded {{version}}",
+      "version_shared": "shared {{version}} with the customer",
+      "version_unshared": "hid {{version}} from the customer",
+      "version_approved": "approved {{version}}",
+      "version_rejected": "rejected {{version}}",
+      "version_commented": "commented on {{version}}",
+      "version_accepted": "accepted {{version}} as working version",
+      "effort_booked": "booked actual effort",
+      "effort_changed": "changed an actual booking",
+      "effort_deleted": "deleted an actual booking",
+      "effort_billing": "changed the billing",
+      "task_created": "created the task “{{title}}”",
+      "task_updated": "changed “{{title}}”",
+      "task_done": "completed “{{title}}”",
+      "task_reopened": "reopened “{{title}}”",
+      "task_deleted": "deleted “{{title}}”",
+      "task_commented": "commented on “{{title}}”",
+      "task_statuses": "changed the statuses of the task list"
+    },
+    "field": {
+      "title": "name",
+      "progress": "progress",
+      "dates": "dates/duration",
+      "deps": "predecessors",
+      "milestone": "milestone",
+      "deadline": "deadline",
+      "assignees": "who",
+      "internal": "internal",
+      "efforts": "effort",
+      "remaining": "remaining",
+      "actualStart": "actual start",
+      "actualEnd": "actual end",
+      "statusId": "status",
+      "due": "due date",
+      "priority": "priority",
+      "area": "area",
+      "description": "description",
+      "projectId": "subproject",
+      "planItemKey": "plan task",
+      "links": "links",
+      "name": "name",
+      "code": "code",
+      "language": "language",
+      "status": "status",
+      "startDate": "start",
+      "endDate": "end",
+      "notBefore": "not before",
+      "workDays": "working days",
+      "projectStart": "plan start",
+      "level": "resource levelling",
+      "effortView": "customer view",
+      "durationFromEffort": "duration from effort",
+      "warnPct": "traffic light",
+      "critPct": "traffic light"
+    }
   }
 }

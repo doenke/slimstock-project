@@ -9,7 +9,7 @@ import { PasswordForm } from './PasswordForm';
 export function ProfilePage() {
   const { t } = useTranslation();
   const me = useMe();
-  const { setMe } = useSession();
+  const { setMe, config } = useSession();
   const [name, setName] = useState(me.name);
   const [email, setEmail] = useState(me.email ?? '');
   const [saved, setSaved] = useState(false);
@@ -42,6 +42,18 @@ export function ProfilePage() {
             {saved && <span className="success">{t('common.saved')}</span>}
           </div>
         </form>
+      </section>
+      <section className="card">
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={me.notify}
+            disabled={!config.mail}
+            onChange={async (e) => setMe(await patch<Me>('/api/me', { notify: e.target.checked }))}
+          />
+          {t('profile.notify')}
+        </label>
+        {!config.mail && <p className="muted small">{t('profile.notifyOff')}</p>}
       </section>
       {me.kind === 'staff' && (
         <section className="card">

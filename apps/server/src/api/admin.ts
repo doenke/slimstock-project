@@ -11,6 +11,7 @@ import {
 import { asc, eq, max } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { hashPassword } from '../auth/password.js';
+import type { Notifier } from '../mail.js';
 import type { SessionStore } from '../auth/sessions.js';
 import type { Db } from '../db/index.js';
 import { customers, projectRoles, users } from '../db/schema.js';
@@ -18,7 +19,23 @@ import { requireAdmin, requireStaff } from './access.js';
 import { toRole, toUserRow } from './dto.js';
 import { ApiError, notFound, parse } from './errors.js';
 
-export async function adminRoutes(app: FastifyInstance, { db, sessions }: { db: Db; sessions: SessionStore }) {
+export async function adminRoutes(
+  app: FastifyInstance,
+  { db, sessions, notifier }: { db: Db; sessions: SessionStore; notifier: Notifier },
+) {
+  /** Sends a test mail to the admin's own address. */
+  app.post('/api/admin/test-mail', async (request) => {
+    requireAdmin(request.user);
+    if (!notifier.enabled) throw new ApiError(400, 'mail_not_configured');
+    if (!request.user.email) throw new ApiError(400, 'no_email');
+    try {
+      await notifier.test(request.user.email, request.user.language ?? 'de');
+    } catch (e) {
+      throw new ApiError(502, 'mail_failed', (e as Error).message);
+    }
+    return { ok: true, to: request.user.email };
+  });
+
   // --- Users (Slimstock staff) ---
 
   app.get('/api/admin/users', async (request) => {

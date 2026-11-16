@@ -7,6 +7,8 @@ import type { PublicConfig } from '@spm/shared';
 import { sql } from 'drizzle-orm';
 import Fastify from 'fastify';
 import { adminRoutes } from './api/admin.js';
+import { auditRoutes } from './api/audit.js';
+import { Notifier, smtpMailer, type Mailer } from './mail.js';
 import { authRoutes } from './api/auth.js';
 import { ApiError, errorHandler } from './api/errors.js';
 import { planRoutes } from './api/plan.js';
@@ -32,7 +34,7 @@ declare module 'fastify' {
 
 export const appVersion = () => process.env.APP_VERSION || 'dev';
 
-export async function buildApp({ config, db }: { config: Config; db: Db }) {
+export async function buildApp({ config, db, mailer }: { config: Config; db: Db; mailer?: Mailer }) {
   const app = Fastify({
     logger: { level: config.LOG_LEVEL },
     trustProxy: config.TRUSTED_PROXY,
@@ -40,6 +42,7 @@ export async function buildApp({ config, db }: { config: Config; db: Db }) {
   });
   const secure = config.PUBLIC_URL.startsWith('https://');
   const sessions = new SessionStore(db, secure);
+  const notifier = new Notifier(db, config, mailer ?? smtpMailer(config), app.log);
 
   app.setErrorHandler(errorHandler);
   await app.register(cookie, { secret: config.SESSION_KEY });
@@ -77,17 +80,19 @@ export async function buildApp({ config, db }: { config: Config; db: Db }) {
   app.get('/api/config', { config: { public: true } }, async (): Promise<PublicConfig> => ({
     version: appVersion(),
     defaultLanguage: config.DEFAULT_LANGUAGE,
+    mail: notifier.enabled,
   }));
 
   await app.register(authRoutes, { db, sessions });
-  await app.register(adminRoutes, { db, sessions });
+  await app.register(adminRoutes, { db, sessions, notifier });
   await app.register(projectRoutes, { db, config });
   await app.register(planRoutes, { db });
-  await app.register(versionRoutes, { db });
+  await app.register(versionRoutes, { db, notifier });
   await app.register(effortRoutes, { db });
   await app.register(exportRoutes, { db });
   await app.register(linkRoutes, { db, config, sessions });
-  await app.register(taskRoutes, { db });
+  await app.register(taskRoutes, { db, notifier });
+  await app.register(auditRoutes, { db });
 
   app.all('/api/*', async () => {
     throw new ApiError(404, 'not_found');
@@ -118,5 +123,5 @@ export async function buildApp({ config, db }: { config: Config; db: Db }) {
   prune.unref();
   app.addHook('onClose', async () => clearInterval(prune));
 
-  return { app, sessions };
+  return { app, sessions, notifier };
 }

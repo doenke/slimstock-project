@@ -18,6 +18,7 @@ import type { Db, DbOrTx } from '../db/index.js';
 import { customers, memberRoles, memberships, projectRoles, projects, users } from '../db/schema.js';
 import type { SessionUser } from '../auth/sessions.js';
 import { chainOf, levelsForUser, loadTree, membershipLevel, requireAdmin, requireRight } from './access.js';
+import { audit } from '../audit.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 
 type ProjectRow = typeof projects.$inferSelect & { customerName: string };
@@ -138,6 +139,11 @@ async function listMembers(db: DbOrTx, projectId: string): Promise<Member[]> {
   return [...byUser.values()].sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'staff' ? -1 : 1));
 }
 
+/** The top-level project of a project (for the change log). */
+async function rootIdOf(db: DbOrTx, projectId: string): Promise<string> {
+  return chainOf(await loadTree(db), projectId).at(-1)!;
+}
+
 export async function projectRoutes(app: FastifyInstance, { db, config }: { db: Db; config: Config }) {
   app.get('/api/projects', async (request) => {
     const levels = await levelsForUser(db, request.user);
@@ -218,6 +224,14 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
     });
     const all = await projectRows(db);
     const levels = await levelsForUser(db, user);
+    await audit(db, {
+      rootId: await rootIdOf(db, id),
+      projectId: id,
+      userId: user.id,
+      action: input.parentId ? 'project.subprojectCreated' : 'project.created',
+      details: { name: input.name },
+      internal: false,
+    });
     return reply.code(201).send(
       toSummary(
         all.find((p) => p.id === id)!,
@@ -231,6 +245,14 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
     await requireRight(db, request.user, request.params.id, 'editProject');
     const input = parse(UpdateProjectInput, request.body);
     await db.update(projects).set(input).where(eq(projects.id, request.params.id));
+    await audit(db, {
+      rootId: await rootIdOf(db, request.params.id),
+      projectId: request.params.id,
+      userId: request.user.id,
+      action: 'project.updated',
+      details: { fields: Object.keys(input) },
+      internal: false,
+    });
     const all = await projectRows(db);
     const levels = await levelsForUser(db, request.user);
     return toSummary(
@@ -287,6 +309,14 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
         .values({ projectId, userId: target!.id, permissionOverride: input.permissionOverride, invitedBy: request.user.id })
         .returning({ id: memberships.id });
       await setRoles(tx, m!.id, input.roleIds);
+      await audit(tx, {
+        rootId: await rootIdOf(tx, projectId),
+        projectId,
+        userId: request.user.id,
+        action: 'member.added',
+        details: { name: target!.name },
+        internal: false,
+      });
     });
     return reply.code(201).send(await listMembers(db, projectId));
   });
@@ -313,6 +343,14 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
         await tx.update(memberships).set({ permissionOverride: input.permissionOverride }).where(eq(memberships.id, row.membership.id));
       }
     });
+    await audit(db, {
+      rootId: await rootIdOf(db, projectId),
+      projectId,
+      userId: request.user.id,
+      action: 'member.updated',
+      details: { name: row.user.name },
+      internal: false,
+    });
     return listMembers(db, projectId);
   });
 
@@ -327,6 +365,14 @@ export async function projectRoutes(app: FastifyInstance, { db, config }: { db: 
     if (!row) throw notFound();
     checkManages(actor, row.user);
     await db.delete(memberships).where(eq(memberships.id, row.membership.id));
+    await audit(db, {
+      rootId: await rootIdOf(db, projectId),
+      projectId,
+      userId: request.user.id,
+      action: 'member.removed',
+      details: { name: row.user.name },
+      internal: false,
+    });
     return listMembers(db, projectId);
   });
 }

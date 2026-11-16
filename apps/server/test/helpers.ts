@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { buildApp } from '../src/app.js';
+import type { MailMessage } from '../src/mail.js';
 import { hashPassword } from '../src/auth/password.js';
 import { loadConfig } from '../src/config.js';
 import { createDb, runMigrations } from '../src/db/index.js';
@@ -31,7 +32,9 @@ export async function createTestApp() {
     LOG_LEVEL: 'error',
     WEB_DIST: '/nonexistent',
   });
-  const { app } = await buildApp({ config, db });
+  // Mails are collected instead of sent.
+  const mails: MailMessage[] = [];
+  const { app, notifier } = await buildApp({ config, db, mailer: { enabled: true, send: async (m) => void mails.push(m) } });
   await app.ready();
   await ensureAdmin(db, config, app.log);
 
@@ -82,6 +85,9 @@ export async function createTestApp() {
     createUser,
     sessionFor,
     admin: { id: adminUser!.id, cookie: adminCookie },
+    mails,
+    /** Waits until notifications are sent. */
+    sent: () => notifier.idle(),
     async close() {
       await app.close();
       await close();

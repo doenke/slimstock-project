@@ -23,6 +23,8 @@ import type { FastifyInstance } from 'fastify';
 import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
 import { planComments, planItems, planVersions, versionReviews } from '../db/schema.js';
+import { audit, versionLabel } from '../audit.js';
+import type { Notifier } from '../mail.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 import {
   allItems,
@@ -95,7 +97,7 @@ async function fixedPriceChanges(db: DbOrTx, version: VersionRow, tree: PlanTree
   return out;
 }
 
-export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
+export async function versionRoutes(app: FastifyInstance, { db, notifier }: { db: Db; notifier: Notifier }) {
   /** All versions of a project's plan the user may see: working version, drafts, history. */
   app.get<{ Params: { id: string } }>('/api/projects/:id/plan/versions', async (request): Promise<PlanVersionInfo[]> => {
     const ctx = await context(db, request.user, request.params.id);
@@ -153,6 +155,12 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
       return draft!.id;
     });
     const [version] = await db.select().from(planVersions).where(eq(planVersions.id, id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: 'version.created',
+      details: { version: versionLabel(version!) },
+    });
     return reply.code(201).send(await versionInfo(db, version!, null));
   });
 
@@ -162,6 +170,7 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
     if (version.kind !== 'draft') throw new ApiError(409, 'version_locked');
     const input = parse(UpdateVersionInput, request.body);
     const [next] = await db.update(planVersions).set(input).where(eq(planVersions.id, version.id)).returning();
+    await audit(db, { rootId: ctx.rootId, userId: request.user.id, action: 'version.renamed', details: { version: versionLabel(next!) } });
     return versionInfo(db, next!, null);
   });
 
@@ -191,6 +200,15 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
       .returning();
     if (version.status === 'in_review')
       await db.update(versionReviews).set({ stale: true }).where(eq(versionReviews.versionId, version.id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: `version.${status}`,
+      details: { version: versionLabel(next!) },
+      // The customer sees that a draft came for review or went back.
+      internal: !(status === 'in_review' || version.status === 'in_review'),
+    });
+    if (status === 'in_review') notifier.reviewRequested(version.id, request.user.id);
     return versionInfo(db, next!, null);
   });
 
@@ -200,6 +218,13 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
     if (!rightsOf(ctx.rootLevel).manageVersions) throw forbidden();
     const { customerVisible } = parse(VisibilityInput, request.body);
     const [next] = await db.update(planVersions).set({ customerVisible }).where(eq(planVersions.id, version.id)).returning();
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: customerVisible ? 'version.shared' : 'version.unshared',
+      details: { version: versionLabel(next!) },
+      internal: !customerVisible,
+    });
     return versionInfo(db, next!, null);
   });
 
@@ -219,6 +244,14 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
         .insert(versionReviews)
         .values({ versionId: version.id, userId: request.user.id, verdict: input.verdict, comment: input.comment });
     });
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: `version.${input.verdict}d`,
+      details: { version: versionLabel(version) },
+      internal: false,
+    });
+    notifier.reviewed(version.id, request.user.id, input.verdict, input.comment);
     return versionInfo(db, version, null);
   });
 
@@ -238,6 +271,13 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
       .insert(planComments)
       .values({ versionId: version.id, itemKey: input.itemKey, userId: request.user.id, text: input.text, internal })
       .returning({ id: planComments.id });
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: 'version.commented',
+      details: { version: versionLabel(version) },
+      internal: internal || !version.customerVisible,
+    });
     return reply.code(201).send(row);
   });
 
@@ -312,6 +352,13 @@ export async function versionRoutes(app: FastifyInstance, { db }: { db: Db }) {
         .where(eq(planVersions.id, draft.id));
     });
     const [accepted] = await db.select().from(planVersions).where(eq(planVersions.id, version.id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      userId: request.user.id,
+      action: 'version.accepted',
+      details: { version: versionLabel(accepted!), changeRequest: accepted!.isChangeRequest },
+      internal: !accepted!.customerVisible,
+    });
     return payload(db, request.user, ctx, accepted!);
   });
 }

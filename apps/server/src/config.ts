@@ -27,6 +27,14 @@ const EnvSchema = z.object({
   /** First admin, created on the first start when there are no users yet. */
   ADMIN_USERNAME: optional,
   ADMIN_PASSWORD: optional,
+  /** Optional mail server for notifications; without SMTP_HOST no mails are sent. */
+  SMTP_HOST: optional,
+  SMTP_PORT: z.coerce.number().int().default(587),
+  /** true: TLS from the start (port 465); otherwise STARTTLS if the server offers it. */
+  SMTP_SECURE: bool,
+  SMTP_USER: optional,
+  SMTP_PASSWORD: optional,
+  SMTP_FROM: optional,
   DEFAULT_LANGUAGE: z.enum(LANGUAGES).default('de'),
   /** Trust X-Forwarded-* only behind a reverse proxy. */
   TRUSTED_PROXY: bool,

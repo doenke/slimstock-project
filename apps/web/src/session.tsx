@@ -41,7 +41,7 @@ export function SessionProvider({ children, fallback }: { children: ReactNode; f
 
   useEffect(() => {
     void (async () => {
-      const cfg = await get<PublicConfig>('/api/config').catch(() => ({ version: '?', defaultLanguage: 'de' as Language }));
+      const cfg = await get<PublicConfig>('/api/config').catch(() => ({ version: '?', defaultLanguage: 'de' as Language, mail: false }));
       const user = await get<Me>('/api/me').catch((e) => {
         if (e instanceof ApiError && e.status === 401) return null;
         return null;

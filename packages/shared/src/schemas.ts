@@ -42,6 +42,7 @@ export const UpdateMeInput = z.object({
   email: email.optional(),
   /** null = use the project language. */
   language: language.nullable().optional(),
+  notify: z.boolean().optional(),
 });
 
 export const CreateUserInput = z.object({

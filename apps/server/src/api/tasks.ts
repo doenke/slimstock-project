@@ -16,6 +16,8 @@ import type { SessionUser } from '../auth/sessions.js';
 import type { Db, DbOrTx } from '../db/index.js';
 import { memberships, planItems, planVersions, projects, taskComments, tasks, users } from '../db/schema.js';
 import { chainOf, levelsForUser, loadTree, type ProjectNode } from './access.js';
+import { audit } from '../audit.js';
+import type { Notifier } from '../mail.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 import { subprojectIds } from './plan.js';
 
@@ -94,7 +96,7 @@ async function treePeople(db: DbOrTx, ids: string[]) {
   return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
+export async function taskRoutes(app: FastifyInstance, { db, notifier }: { db: Db; notifier: Notifier }) {
   async function list(user: SessionUser, projectId: string): Promise<TaskList> {
     const { tree, levels, rootId, root } = await context(db, user, projectId);
     // On a subproject: its tasks and those of its own subprojects.
@@ -219,6 +221,16 @@ export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
         createdBy: request.user.id,
       })
       .returning({ id: tasks.id });
+    const internal = input.internal && request.user.kind === 'staff';
+    await audit(db, {
+      rootId: ctx.rootId,
+      projectId,
+      userId: request.user.id,
+      action: 'task.created',
+      details: { title: input.title },
+      internal,
+    });
+    notifier.taskAssigned(row!.id, input.assignees, request.user.id);
     return reply.code(201).send({ id: row!.id, list: await list(request.user, request.params.id) });
   });
 
@@ -246,6 +258,25 @@ export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
         updatedAt: new Date(),
       })
       .where(eq(tasks.id, task.id));
+    const changed = Object.keys(fields).filter(
+      (k) =>
+        k !== 'sort' && JSON.stringify((fields as Record<string, unknown>)[k]) !== JSON.stringify((task as Record<string, unknown>)[k]),
+    );
+    const action = done !== undefined && done !== task.done ? (done ? 'task.done' : 'task.reopened') : 'task.updated';
+    if (changed.length || action !== 'task.updated') {
+      await audit(db, {
+        rootId: ctx.rootId,
+        projectId: fields.projectId ?? task.projectId,
+        userId: request.user.id,
+        action,
+        details: { title: fields.title ?? task.title, fields: changed },
+        internal: fields.internal ?? task.internal,
+      });
+    }
+    if (fields.assignees) {
+      const added = fields.assignees.filter((u) => !task.assignees.includes(u));
+      if (added.length) notifier.taskAssigned(task.id, added, request.user.id);
+    }
     return list(request.user, request.query.view ?? task.projectId);
   });
 
@@ -257,6 +288,14 @@ export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
     if (!rights.see) throw notFound();
     if (!rights.delete) throw forbidden();
     await db.delete(tasks).where(eq(tasks.id, task.id));
+    await audit(db, {
+      rootId: ctx.rootId,
+      projectId: task.projectId,
+      userId: request.user.id,
+      action: 'task.deleted',
+      details: { title: task.title },
+      internal: task.internal,
+    });
     return list(request.user, request.query.view ?? ctx.rootId);
   });
 
@@ -272,6 +311,14 @@ export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
       .insert(taskComments)
       .values({ taskId: task.id, userId: request.user.id, text: input.text, internal: input.internal && request.user.kind === 'staff' })
       .returning({ id: taskComments.id });
+    await audit(db, {
+      rootId: ctx.rootId,
+      projectId: task.projectId,
+      userId: request.user.id,
+      action: 'task.commented',
+      details: { title: task.title },
+      internal: task.internal || (input.internal && request.user.kind === 'staff'),
+    });
     return reply.code(201).send(row);
   });
 
@@ -313,6 +360,7 @@ export async function taskRoutes(app: FastifyInstance, { db }: { db: Db }) {
           ),
         );
     });
+    await audit(db, { rootId: ctx.rootId, userId: request.user.id, action: 'task.statuses', details: {}, internal: false });
     return list(request.user, request.params.id);
   });
 

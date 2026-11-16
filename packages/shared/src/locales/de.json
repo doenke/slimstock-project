@@ -64,7 +64,10 @@
     "link_only_for_customers": "Links gibt es nur für Personen beim Kunden – Slimstock meldet sich mit Benutzername und Passwort an.",
     "reason_required": "Bitte gib bei einer Ablehnung eine Begründung an.",
     "unknown_status": "Diesen Status gibt es nicht.",
-    "invalid_url": "Bitte eine Adresse mit http:// oder https:// angeben."
+    "invalid_url": "Bitte eine Adresse mit http:// oder https:// angeben.",
+    "mail_not_configured": "Es ist kein Mailserver eingerichtet.",
+    "no_email": "Trag zuerst deine E-Mail-Adresse im Profil ein.",
+    "mail_failed": "Der Mailserver hat die Nachricht nicht angenommen."
   },
   "permission": {
     "reader": "Leser",
@@ -106,7 +109,9 @@
   "profile": {
     "title": "Profil",
     "name": "Name",
-    "email": "E-Mail"
+    "email": "E-Mail",
+    "notify": "E-Mail-Benachrichtigungen (Entwurf zur Abstimmung, zugeordnete Aufgaben)",
+    "notifyOff": "Der Mailversand ist auf diesem Server nicht eingerichtet."
   },
   "projects": {
     "title": "Projekte",
@@ -204,7 +209,10 @@
     "activeLabel": "Aktiv (kann sich anmelden)",
     "customersIntro": "Kunden, für die Projekte laufen.",
     "newCustomer": "Neuer Kunde",
-    "noCustomers": "Noch keine Kunden. Sie entstehen auch beim Anlegen eines Projekts."
+    "noCustomers": "Noch keine Kunden. Sie entstehen auch beim Anlegen eines Projekts.",
+    "testMail": "Test-Mail an mich senden",
+    "testMailSent": "Test-Mail an {{to}} verschickt.",
+    "mailOff": "Kein Mailserver eingerichtet (SMTP_HOST) – die App verschickt keine Benachrichtigungen."
   },
   "plan": {
     "days_one": "{{value}} Tag",
@@ -559,5 +567,114 @@
     "myTitle": "Meine Aufgaben",
     "myEmpty": "Dir ist gerade nichts Offenes zugeordnet. 🎉",
     "linkedTitle": "Aufgaben dazu"
+  },
+  "mail": {
+    "greeting": "Hallo {{name}},",
+    "footer": "Viele Grüße\nSlimstock Projektmanagement\n\n(Diese Nachricht kommt automatisch. Benachrichtigungen schaltest du in der App unter „Profil“ ab.)",
+    "reviewRequested": {
+      "subject": "„{{project}}“: Entwurf {{version}} zur Abstimmung",
+      "body": "im Projekt „{{project}}“ liegt dir der Entwurf {{version}} zur Abstimmung vor. Sieh dir die Änderungen an und stimme zu – oder lehne mit Begründung ab:"
+    },
+    "approved": {
+      "subject": "„{{project}}“: {{name}} hat {{version}} zugestimmt",
+      "body": "{{name}} hat dem Entwurf {{version}} im Projekt „{{project}}“ zugestimmt.\nKommentar: {{comment}}"
+    },
+    "rejected": {
+      "subject": "„{{project}}“: {{name}} hat {{version}} abgelehnt",
+      "body": "{{name}} hat den Entwurf {{version}} im Projekt „{{project}}“ abgelehnt.\nBegründung: {{comment}}"
+    },
+    "taskAssigned": {
+      "subject": "„{{project}}“: Neue Aufgabe – {{task}}",
+      "body": "{{name}} hat dir im Projekt „{{project}}“ eine Aufgabe zugeordnet:\n\n{{task}}\nFällig: {{due}}"
+    },
+    "test": {
+      "subject": "Testnachricht von Slimstock Projektmanagement",
+      "body": "Der Mailversand funktioniert. 👍"
+    }
+  },
+  "audit": {
+    "title": "Verlauf",
+    "intro": "Wer hat wann was geändert.",
+    "empty": "Noch keine Einträge.",
+    "more": "Ältere laden",
+    "someone": "Jemand",
+    "area": {
+      "all": "Alles",
+      "project": "Projekt & Beteiligte",
+      "plan": "Plan & Kalkulation",
+      "tasks": "Aufgaben"
+    },
+    "action": {
+      "project_created": "hat das Projekt angelegt",
+      "project_subprojectCreated": "hat das Teilprojekt „{{name}}“ angelegt",
+      "project_updated": "hat die Projektdaten geändert",
+      "member_added": "hat {{name}} hinzugefügt",
+      "member_updated": "hat Rollen oder Rechte von {{name}} geändert",
+      "member_removed": "hat {{name}} entfernt",
+      "link_renewed": "hat den Link von {{name}} erneuert",
+      "plan_settings": "hat die Planeinstellungen geändert",
+      "plan_itemCreated": "hat „{{title}}“ angelegt",
+      "plan_itemUpdated": "hat „{{title}}“ geändert",
+      "plan_itemDeleted": "hat „{{title}}“ gelöscht",
+      "plan_moved": "hat „{{title}}“ verschoben",
+      "version_created": "hat den Entwurf {{version}} angelegt",
+      "version_renamed": "hat {{version}} umbenannt",
+      "version_in_review": "hat {{version}} zur Abstimmung gegeben",
+      "version_editing": "hat {{version}} in Bearbeitung genommen",
+      "version_discarded": "hat {{version}} verworfen",
+      "version_shared": "hat {{version}} für den Kunden sichtbar gemacht",
+      "version_unshared": "hat {{version}} für den Kunden ausgeblendet",
+      "version_approved": "hat {{version}} zugestimmt",
+      "version_rejected": "hat {{version}} abgelehnt",
+      "version_commented": "hat {{version}} kommentiert",
+      "version_accepted": "hat {{version}} als Arbeitsversion angenommen",
+      "effort_booked": "hat Ist-Aufwand gebucht",
+      "effort_changed": "hat eine Ist-Buchung geändert",
+      "effort_deleted": "hat eine Ist-Buchung gelöscht",
+      "effort_billing": "hat die Abrechnung geändert",
+      "task_created": "hat die Aufgabe „{{title}}“ angelegt",
+      "task_updated": "hat „{{title}}“ geändert",
+      "task_done": "hat „{{title}}“ erledigt",
+      "task_reopened": "hat „{{title}}“ wieder geöffnet",
+      "task_deleted": "hat „{{title}}“ gelöscht",
+      "task_commented": "hat „{{title}}“ kommentiert",
+      "task_statuses": "hat die Status der Aufgabenliste geändert"
+    },
+    "field": {
+      "title": "Name",
+      "progress": "Fortschritt",
+      "dates": "Termine/Dauer",
+      "deps": "Vorgänger",
+      "milestone": "Meilenstein",
+      "deadline": "Deadline",
+      "assignees": "Wer",
+      "internal": "intern",
+      "efforts": "Aufwand",
+      "remaining": "Rest",
+      "actualStart": "Ist-Start",
+      "actualEnd": "Ist-Ende",
+      "statusId": "Status",
+      "due": "Fälligkeit",
+      "priority": "Priorität",
+      "area": "Bereich",
+      "description": "Beschreibung",
+      "projectId": "Teilprojekt",
+      "planItemKey": "Vorgang",
+      "links": "Links",
+      "name": "Name",
+      "code": "Kürzel",
+      "language": "Sprache",
+      "status": "Status",
+      "startDate": "Beginn",
+      "endDate": "Ende",
+      "notBefore": "Nicht vor",
+      "workDays": "Arbeitstage",
+      "projectStart": "Planbeginn",
+      "level": "Ressourcenabgleich",
+      "effortView": "Kundensicht",
+      "durationFromEffort": "Dauer aus Aufwand",
+      "warnPct": "Ampel",
+      "critPct": "Ampel"
+    }
   }
 }

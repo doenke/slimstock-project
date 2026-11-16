@@ -1,7 +1,7 @@
 # Slimstock Projektmanagement – Hinweise für Claude
 
 Browser-App (PWA) zum Führen von Slimstock-Kundenprojekten, geteilt mit dem Kunden. Fachlicher Plan und
-alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–6 fertig.
+alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–7 fertig (POC komplett).
 
 ## Aufbau
 
@@ -22,6 +22,9 @@ pnpm-Monorepo, TypeScript durchgehend.
   nie interne Vorgänge/Kommentare; Kalkulation je Projekteinstellung `effortView`. Aufgaben: `tasks.ts`
   (Status je Projekt in `projects.settings.taskStatuses`, Fälligkeitsgruppen), Tabelle `tasks` am Projekt
   oder Teilprojekt mit `root_id`, optional `plan_item_key`; Rechte je Aufgabe in `api/tasks.ts` (`taskRights`).
+  Änderungsprotokoll: jede Änderung ruft `audit()` (`src/audit.ts`) mit `internal` = nicht für Kunden;
+  Texte `audit.action.<aktion mit _ statt .>`. Mails: `src/mail.ts` (`Notifier`, läuft im Hintergrund,
+  Kunden bekommen ihren Link mit `?next=`); in Tests sammelt `t.mails` die Mails, `await t.sent()` wartet.
 - `apps/server` – Fastify 5, Drizzle + PostgreSQL. `src/app.ts` (Hooks, Healthcheck, statische Web-App),
   `src/api/*` (auth, admin, projects, plan, versions = Entwürfe/Annehmen, effort = Buchungen/Abrechnung,
   export = Excel über exceljs, links = persönliche Kunden-Links unter `/k/<token>`, tasks = Aufgabenliste und „Meine Aufgaben“, access = Rechteberechnung), `src/i18n.ts` (Texte für Server-Ausgaben), `src/auth/*` (Argon2id, Sessions,

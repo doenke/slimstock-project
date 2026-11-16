@@ -5,7 +5,7 @@ import { get, patch, post } from '../api';
 import { AdminTabs } from '../components/Layout';
 import { Avatar, Dialog, ErrorText, Field, Loading, PageError, useLoad, useSubmit } from '../components/ui';
 import { formatDateTime } from '../format';
-import { useMe } from '../session';
+import { useMe, useSession } from '../session';
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -18,6 +18,7 @@ export function UsersPage() {
     <div className="page">
       <h1>{t('nav.admin')}</h1>
       <AdminTabs />
+      <MailCheck />
       <div className="section-head">
         <p className="muted">{t('admin.usersIntro')}</p>
         <button className="primary" onClick={() => setEditing('new')}>
@@ -188,5 +189,25 @@ function ResetDialog({ user, onClose }: { user: UserRow; onClose: () => void }) 
         </form>
       )}
     </Dialog>
+  );
+}
+
+/** Whether mail is set up, and a test mail to the admin's own address. */
+function MailCheck() {
+  const { t } = useTranslation();
+  const { config } = useSession();
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const { busy, error, onSubmit } = useSubmit(async () => {
+    setSentTo((await post<{ to: string }>('/api/admin/test-mail')).to);
+  });
+  if (!config.mail) return <p className="muted small">✉ {t('admin.mailOff')}</p>;
+  return (
+    <div className="row wrap small">
+      <button type="button" className="small" disabled={busy} onClick={() => void onSubmit()}>
+        ✉ {t('admin.testMail')}
+      </button>
+      {sentTo && <span className="success">{t('admin.testMailSent', { to: sentTo })}</span>}
+      <ErrorText code={error} />
+    </div>
   );
 }

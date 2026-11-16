@@ -21,6 +21,8 @@ export const users = pgTable(
     isAdmin: boolean('is_admin').notNull().default(false),
     active: boolean('active').notNull().default(true),
     language: text('language').$type<Language>(),
+    /** E-mail notifications (review requests, assigned tasks). */
+    notify: boolean('notify').notNull().default(true),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
@@ -313,4 +315,22 @@ export const taskComments = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('task_comments_task_idx').on(t.taskId)],
+);
+
+/** Change log per project: who changed what when. Customers see only entries that are not internal. */
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: id(),
+    rootId: uuid('root_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id),
+    action: text('action').notNull(),
+    details: jsonb('details').$type<Record<string, unknown>>().notNull().default({}),
+    internal: boolean('internal').notNull().default(true),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('audit_log_root_idx').on(t.rootId, t.at)],
 );
