@@ -178,3 +178,12 @@ export const PlanSettingsInput = z.object({
   projectStart: planDate.nullable().optional(),
   level: z.boolean().optional(),
 });
+
+export const CreateDraftInput = z.object({
+  /** Copy of this version; default: the working version. */
+  fromVersionId: z.uuid().optional(),
+  name: trimmed(160),
+  description: optionalText(4000),
+});
+export const UpdateVersionInput = z.object({ name: trimmed(160).optional(), description: optionalText(4000).optional() });
+export const VersionStatusInput = z.object({ status: z.enum(['editing', 'in_review', 'discarded']) });

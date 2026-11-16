@@ -31,6 +31,8 @@ interface Props {
   selected: string | null;
   onSelect: (id: string) => void;
   zoom: Zoom;
+  /** Dates of a compared version per row: drawn as thin grey bars below. */
+  baseline?: Record<string, { start: string; end: string; milestone: boolean }>;
   /** Dragging finished: move the start (days) or change the length (new end date). */
   onDrag?: (key: string, change: { start: string; end?: string } | { dur: number }) => void;
 }
@@ -47,7 +49,7 @@ interface Drag {
  * from planned start to end, milestones as diamonds, links as arrows, the critical path in red. Dragging a
  * bar moves its start, its right edge changes the duration.
  */
-export function PlanGantt({ plan, rows, collapsed, onToggle, selected, onSelect, zoom, onDrag }: Props) {
+export function PlanGantt({ plan, rows, collapsed, onToggle, selected, onSelect, zoom, baseline, onDrag }: Props) {
   const { t } = useTranslation();
   const calendar = useMemo(() => calendarOf(plan.settings.workDays), [plan.settings.workDays]);
   const dw = DAY_WIDTH[zoom];
@@ -60,7 +62,8 @@ export function PlanGantt({ plan, rows, collapsed, onToggle, selected, onSelect,
     const dates = rows.flatMap((r) => {
       const c = plan.computed[r.id];
       const deadline = r.kind === 'item' ? r.item.pm.deadline : undefined;
-      return c ? [c.start, c.end, c.task?.lateEnd ?? c.end, ...(deadline ? [deadline] : [])] : [];
+      const b = baseline?.[r.id];
+      return [...(c ? [c.start, c.end, c.task?.lateEnd ?? c.end] : []), ...(deadline ? [deadline] : []), ...(b ? [b.start, b.end] : [])];
     });
     let from = dates.reduce((m, d) => (d < m ? d : m), dates[0] ?? plan.projectStart);
     let to = dates.reduce((m, d) => (d > m ? d : m), dates[0] ?? plan.projectStart);
@@ -70,7 +73,7 @@ export function PlanGantt({ plan, rows, collapsed, onToggle, selected, onSelect,
     if (zoom === 'week') from = addCalendarDays(from, -((new Date(`${from}T00:00:00Z`).getUTCDay() + 6) % 7));
     to = addCalendarDays(to, PAD_AFTER);
     return { from, days: calendarDaysBetween(from, to) + 1 };
-  }, [rows, plan, today, zoom]);
+  }, [rows, plan, today, zoom, baseline]);
 
   const x = (date: string) => calendarDaysBetween(range.from, date) * dw;
   const days = useMemo(() => Array.from({ length: range.days }, (_, i) => addCalendarDays(range.from, i)), [range]);
@@ -282,6 +285,16 @@ export function PlanGantt({ plan, rows, collapsed, onToggle, selected, onSelect,
                   )}
                 </div>
                 <div className="gantt__lane" style={{ width }}>
+                  {baseline?.[r.id] && (
+                    <span
+                      className={`gantt__baseline${baseline[r.id]!.milestone ? ' gantt__baseline--milestone' : ''}`}
+                      style={{
+                        left: baseline[r.id]!.milestone ? x(baseline[r.id]!.start) + dw : x(baseline[r.id]!.start),
+                        width: baseline[r.id]!.milestone ? 0 : (calendarDaysBetween(baseline[r.id]!.start, baseline[r.id]!.end) + 1) * dw,
+                      }}
+                      title={`${t('versions.baseline')}: ${shortDate(baseline[r.id]!.start)} – ${shortDate(baseline[r.id]!.end)}`}
+                    />
+                  )}
                   {item?.pm.deadline && (
                     <span
                       className="gantt__due"

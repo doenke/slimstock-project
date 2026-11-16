@@ -57,7 +57,9 @@
     "dependency_type": "Phases can only be linked “after end”.",
     "unknown_item": "This task does not exist (any more).",
     "unknown_subproject": "This subproject does not exist (any more).",
-    "assignee_not_member": "Only people on the project can be assigned."
+    "assignee_not_member": "Only people on the project can be assigned.",
+    "status_not_allowed": "Not possible in the version's current state.",
+    "unknown_version": "This version does not exist."
   },
   "permission": {
     "reader": "Reader",
@@ -287,5 +289,88 @@
     "planStartHint": "Empty = project start ({{date}}).",
     "levelLabel": "Resource levelling",
     "levelHint": "Everyone does their tasks one after the other; where they overlap, the one with the least float goes first."
+  },
+  "versions": {
+    "workingName": "Initial plan",
+    "unnamed": "Untitled",
+    "version": "Version",
+    "group": {
+      "working": "Working version",
+      "drafts": "Drafts",
+      "history": "History and discarded drafts"
+    },
+    "status": {
+      "editing": "Draft being edited",
+      "in_review": "In review",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "discarded": "Discarded"
+    },
+    "kind": {
+      "working": "Working version",
+      "draft": "Draft",
+      "history": "Former working version"
+    },
+    "compareWith": "Compare with",
+    "noCompare": "– no comparison –",
+    "newDraft": "New draft",
+    "metaWorking": "Valid plan since {{date}}, accepted by {{by}}",
+    "metaHistory": "Valid from {{from}} to {{to}} – view only",
+    "metaDraft": "Created on {{date}} by {{by}}, based on {{base}}",
+    "metaInitial": "Valid plan – this is where the ongoing work happens",
+    "rename": "Name and description",
+    "toReview": "Hand over for review",
+    "toReviewHint": "Locks the draft so nobody agrees to a moving target",
+    "backToEditing": "Take back for editing",
+    "confirmDiscard": "Discard this draft? It stays in the list and can be brought back.",
+    "discard": "Discard",
+    "revive": "Bring back",
+    "accept": "Accept …",
+    "newDraftFrom": "New draft from {{version}}",
+    "newDraftIntro": "The draft is a copy you can plan in freely – the working version stays untouched until you accept it.",
+    "name": "Name",
+    "namePlaceholder": "e.g. “Go-live two weeks later”",
+    "description": "What changes and why?",
+    "descriptionHint": "Helps when reviewing and in the history.",
+    "acceptTitle": "Accept {{version}}",
+    "acceptIntro": "The draft becomes the new working version. The current working version stays read-only in the history.",
+    "acceptChanges": "What changes compared to the working version",
+    "carriedTitle": "Taken over from the working version (actual data)",
+    "carriedNone": "Nothing – progress and actual dates are the same.",
+    "actual": {
+      "progress": "progress",
+      "actualStart": "actual start",
+      "actualEnd": "actual end"
+    },
+    "lostTitle": "Changes in the working version that are not taken over",
+    "lostIntro": "These planning changes were made in the working version after the draft was created. They are missing in the draft and will only remain in the history.",
+    "acceptConfirm": "Accept now",
+    "lockedReview": "This draft is in review and locked. Take it back to change it.",
+    "lockedOld": "This version is view only. Create a new draft from it to make changes.",
+    "baseline": "Compared version"
+  },
+  "diff": {
+    "end": "Project end {{from}} → {{to}} ({{shift}} working days)",
+    "none": "No planning changes.",
+    "counts": "{{added}} new · {{removed}} removed · {{changed}} changed",
+    "title": "Changes compared to {{version}}",
+    "change": "Change",
+    "kind": {
+      "added": "new",
+      "removed": "removed",
+      "changed": "changed"
+    },
+    "field": {
+      "title": "name",
+      "start": "start",
+      "end": "end",
+      "duration": "duration",
+      "milestone": "milestone",
+      "deps": "predecessors",
+      "assignees": "who",
+      "place": "position",
+      "internal": "internal",
+      "deadline": "deadline"
+    }
   }
 }

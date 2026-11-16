@@ -42,6 +42,8 @@ export function rightsOf(level: PermissionLevel | null) {
     /** Customer project leads only manage the customer side. */
     manageAllMembers: level === 'pl_slimstock',
     editPlan: isSlimstockLevel(level),
+    /** Hand drafts to the customer, accept them, decide what the customer sees. */
+    manageVersions: level === 'pl_slimstock',
     editTasks: r >= rank('team_customer'),
   };
 }

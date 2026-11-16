@@ -11,13 +11,14 @@ persönlichen Link.
 Kurz gesagt: Schluss mit dem Projektplan als Excel-Anhang in der fünften Fassung – ein gemeinsamer
 Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
 
-> **Stand: Proof of Concept, Stufe 2.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
-> Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit und der Projektplan (Tabelle und Gantt) sind da.
-> Entwürfe, Aufwandskalkulation, Kundenzugang per Link und Taskliste folgen – siehe [PLAN.md](PLAN.md).
+> **Stand: Proof of Concept, Stufe 3.** Projekte, Teilprojekte, Beteiligte mit Projektrollen und
+> Berechtigungen, Benutzerverwaltung, Mehrsprachigkeit, der Projektplan (Tabelle und Gantt) sowie
+> Entwürfe mit Vergleich und Historie sind da. Aufwandskalkulation, Kundenzugang per Link und Taskliste
+> folgen – siehe [PLAN.md](PLAN.md).
 
-| Projekte | Projektplan | Beteiligte | Projektrollen |
+| Projekte | Projektplan | Entwurf im Vergleich | Beteiligte |
 | --- | --- | --- | --- |
-| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Beteiligte von Slimstock und Kunde mit Rollen und Berechtigung](docs/screenshots/beteiligte.png) | ![Verwaltung der Projektrollen für Slimstock und Kunde](docs/screenshots/rollen.png) |
+| ![Projektliste nach Kunden gruppiert, mit Status, Zeitraum und Teilprojekten](docs/screenshots/projekte.png) | ![Gantt mit Phasen, Teilprojekten, Meilensteinen und kritischem Pfad](docs/screenshots/projektplan.png) | ![Entwurf mit Änderungsliste und grauen Vergleichsbalken gegenüber der Arbeitsversion](docs/screenshots/entwurf.png) | ![Beteiligte von Slimstock und Kunde mit Rollen und Berechtigung](docs/screenshots/beteiligte.png) |
 
 ## Was Slimstock Projektmanagement für dich macht
 
@@ -27,6 +28,13 @@ Stand, den Slimstock pflegt und der Kunde jederzeit aufrufen kann.
   Teilprojekt als eigener Block darin. Verknüpfungen („nach Ende“, „gleicher Start“ … mit Abstand),
   Arbeitstage, feste Termine, Deadlines – die App rechnet frühestes und spätestes Datum, Puffer und
   den kritischen Pfad aus. Als Tabelle oder als Gantt, in dem du Balken einfach ziehst.
+- **Entwürfe statt Excel-Fassung 5** – so viele Entwürfe, wie du willst: „Go-live zwei Wochen
+  später“, „Schulung vorziehen“. Jeder Entwurf ist eine Kopie, in der du frei planst; die
+  Arbeitsversion bleibt unberührt. Ein angenommener Entwurf wird zur neuen Arbeitsversion, die alte
+  wandert in die Historie – Fortschritt und Ist-Termine nimmt er dabei mit.
+- **Sehen, was sich ändert** – jede Version lässt sich mit jeder anderen vergleichen: graue Balken im
+  Gantt, eine Liste aller neuen, entfernten und verschobenen Vorgänge und wie sich das Projektende
+  bewegt.
 - **Stand im Blick** – Fortschritt, Ist-Start und Ist-Ende je Vorgang; Phasen, Teilprojekte und das
   ganze Projekt rechnen ihren Stand daraus.
 - **Wer macht was** – jede Person bekommt eine oder mehrere Projektrollen: Projektleiter, Solution
@@ -109,10 +117,27 @@ Unter **Planeinstellungen** legst du die Arbeitstage, den Planbeginn und den Res
 (dann arbeitet jede Person ihre Vorgänge nacheinander ab). Auf einem Teilprojekt zeigt der Plan nur
 dessen Teil; ein Haken holt den ganzen Plan dazu.
 
-Der Plan, den du hier bearbeitest, ist die **Arbeitsversion**. Entwürfe zum Abstimmen mit dem Kunden
-kommen in der nächsten Stufe.
+Der Plan, den du hier bearbeitest, ist die **Arbeitsversion** – der gültige Stand, in dem laufend
+Fortschritt und Ist-Termine gepflegt werden.
 
-### 6. Beteiligte eintragen
+### 6. Mit Entwürfen umplanen
+
+Steht eine größere Änderung an, legst du oben in der Versionsleiste einen **Neuen Entwurf** an – mit
+einem Namen und dem Grund („Der Kunde liefert die Testdaten später“). Im Entwurf planst du frei; die
+Änderungsliste und die grauen Balken zeigen laufend, was sich gegenüber der Arbeitsversion ändert.
+
+- **Zur Abstimmung geben** sperrt den Entwurf, damit niemand einem sich bewegenden Ziel zustimmt.
+  **Zurückholen** macht ihn wieder bearbeitbar.
+- **Annehmen …** zeigt vorher, was sich ändert, welche Ist-Daten aus der Arbeitsversion übernommen
+  werden und welche Planänderungen in der Arbeitsversion seit Beginn des Entwurfs dabei verloren
+  gingen. Danach ist der Entwurf die Arbeitsversion, die alte steht in der Historie.
+- **Verwerfen** legt einen Entwurf zur Seite; er bleibt in der Liste und lässt sich wiederbeleben.
+- Aus jeder Version – auch aus der Historie – lässt sich ein neuer Entwurf machen.
+
+Entwürfe anlegen und bearbeiten darf das Slimstock-Team; zur Abstimmung geben und annehmen nur die
+Projektleitung Slimstock. Der Kunde sieht Entwürfe noch nicht – das kommt mit dem Kundenzugang.
+
+### 7. Beteiligte eintragen
 
 Im Projekt unter **Beteiligte**: Slimstock-Kollegen aus der Liste wählen, Personen beim Kunden mit
 Name und E-Mail eintragen, jeweils mit ihren Rollen. Die Berechtigung ergibt sich aus den Rollen; nur
@@ -128,7 +153,9 @@ bleibt, wie es ist.
 
 ## Was die App (noch) nicht kann
 
-- Entwürfe, Versionsvergleich und Aufwandskalkulation kommen in den nächsten Stufen.
+- Aufwandskalkulation und Kundenzugang (samt Abstimmung durch den Kunden) kommen in den nächsten Stufen.
+- Änderungen, die in der Arbeitsversion gemacht wurden, während ein Entwurf entstand, lassen sich beim
+  Annehmen noch nicht einzeln übernehmen – die App zeigt sie nur an.
 - Der Plan aktualisiert sich nicht live: Was ein Kollege gleichzeitig ändert, siehst du nach dem
   nächsten Neuladen. Überschreibt ihr euch, merkt die App das und lädt neu.
 - Keine Feiertage im Arbeitskalender, kein Import aus MS Project.

@@ -1,7 +1,11 @@
-import { subRowId, type PlanPayload, type PlanTarget } from '@spm/shared';
+import { subRowId, type PlanPayload, type PlanTarget, type PlanVersionInfo } from '@spm/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dialog, ErrorText, Field, Loading, PageError, useSubmit } from '../components/ui';
+import { get } from '../api';
+import { Dialog, ErrorText, Field, Loading, PageError, useLoad, useSubmit } from '../components/ui';
+import { navigate, useLocation } from '../router';
+import { DiffPanel } from './DiffPanel';
+import { VersionBar, versionLabel } from './VersionBar';
 import { formatDate } from '../format';
 import { ItemPanel } from './ItemPanel';
 import { PlanGantt, type Zoom } from './PlanGantt';
@@ -15,7 +19,18 @@ type Mode = 'gantt' | 'table';
 /** The project plan of a project (on a subproject: the whole plan, filtered to that subproject). */
 export function PlanView({ projectId, rootId }: { projectId: string; rootId: string }) {
   const { t } = useTranslation();
-  const { plan, tree, error, notice, setNotice, run } = usePlan(projectId);
+  const { query } = useLocation();
+  const versionParam = query.get('version');
+  const compareParam = query.get('compare');
+  const { data: versions, reload: reloadVersions } = useLoad(
+    () => get<PlanVersionInfo[]>(`/api/projects/${projectId}/plan/versions`),
+    [projectId],
+  );
+  const shown = versions?.find((v) => v.id === versionParam);
+  const working = versions?.find((v) => v.kind === 'working');
+  // A draft is compared with the working version unless chosen otherwise ("none" switches it off).
+  const compareId = compareParam === 'none' ? null : (compareParam ?? (shown && shown.kind !== 'working' ? (working?.id ?? null) : null));
+  const { plan, tree, error, notice, setNotice, run, reload } = usePlan(projectId, versionParam, versions ? compareId : null);
   const [mode, setMode] = useState<Mode>(() => loadValue('spm:plan-mode', ['gantt', 'table'], 'gantt'));
   const [zoom, setZoom] = useState<Zoom>(() => loadValue('spm:plan-zoom', ['day', 'week'], 'day'));
   const [collapsed, setCollapsed] = useState(() => loadSet(`spm:plan-collapsed:${rootId}`));
@@ -39,6 +54,12 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
   if (error) return <PageError code={error} />;
   if (!plan || !tree) return <Loading />;
   const vid = plan.version.id;
+  const show = (versionId: string | null, compare?: string | null) => {
+    const q = new URLSearchParams({ tab: 'plan' });
+    if (versionId) q.set('version', versionId);
+    if (compare !== undefined) q.set('compare', compare ?? 'none');
+    navigate(`/projects/${projectId}?${q}`);
+  };
   const edit = plan.rights.edit;
 
   const toggle = (id: string) => {
@@ -116,6 +137,23 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
 
   return (
     <div className="plan">
+      {versions && (
+        <VersionBar
+          projectId={projectId}
+          plan={plan}
+          versions={versions}
+          compareId={compareId}
+          onShow={show}
+          onChanged={() => {
+            void reloadVersions();
+            void reload();
+          }}
+        />
+      )}
+      {plan.compare && <DiffPanel diff={plan.compare.diff} versionLabel={versionLabel(t, plan.compare.version)} onSelect={setSelected} />}
+      {!edit && plan.rights.createDraft && plan.version.kind !== 'working' && (
+        <p className="muted small">{t(plan.version.status === 'in_review' ? 'versions.lockedReview' : 'versions.lockedOld')}</p>
+      )}
       <div className="plan-toolbar">
         <div className="segmented" role="group" aria-label={t('plan.view')}>
           {(['gantt', 'table'] as const).map((m) => (
@@ -208,6 +246,7 @@ export function PlanView({ projectId, rootId }: { projectId: string; rootId: str
               selected={selected}
               onSelect={setSelected}
               zoom={zoom}
+              baseline={plan.compare?.computed}
               onDrag={
                 edit
                   ? (key, change) =>

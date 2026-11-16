@@ -7,6 +7,7 @@ import {
   UpdatePlanItemInput,
   allowedDepTypes,
   computePlan,
+  diffPlans,
   hasCycle,
   insertPosition,
   moveInTree,
@@ -17,6 +18,7 @@ import {
   type PlanPayload,
   type PlanPm,
   type PlanSubproject,
+  type PlanVersionInfo,
 } from '@spm/shared';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
@@ -26,7 +28,7 @@ import { memberships, planItems, planVersions, projects, users } from '../db/sch
 import { chainOf, levelsForUser, loadTree, type ProjectNode } from './access.js';
 import { ApiError, forbidden, notFound, parse } from './errors.js';
 
-type VersionRow = typeof planVersions.$inferSelect;
+export type VersionRow = typeof planVersions.$inferSelect;
 type ItemRow = typeof planItems.$inferSelect;
 
 /** The top-level project of a project. */
@@ -68,7 +70,7 @@ const toItem = (r: ItemRow): PlanItem => ({
   rev: r.rev,
 });
 
-interface Context {
+export interface Context {
   rootId: string;
   root: typeof projects.$inferSelect;
   tree: Map<string, ProjectNode>;
@@ -76,7 +78,7 @@ interface Context {
   rootLevel: PermissionLevel | null;
 }
 
-async function context(db: DbOrTx, user: SessionUser, projectId: string): Promise<Context> {
+export async function context(db: DbOrTx, user: SessionUser, projectId: string): Promise<Context> {
   const tree = await loadTree(db);
   if (!tree.has(projectId)) throw notFound();
   const levels = await levelsForUser(db, user, tree);
@@ -86,7 +88,7 @@ async function context(db: DbOrTx, user: SessionUser, projectId: string): Promis
   return { rootId, root: root!, tree, levels, rootLevel: levels.get(rootId) ?? null };
 }
 
-async function loadSubprojects(db: DbOrTx, ctx: Context, version: VersionRow): Promise<PlanSubproject[]> {
+export async function loadSubprojects(db: DbOrTx, ctx: Context, version: VersionRow): Promise<PlanSubproject[]> {
   const ids = subprojectIds(ctx.tree, ctx.rootId);
   if (!ids.length) return [];
   const rows = await db.select().from(projects).where(inArray(projects.id, ids)).orderBy(asc(projects.sort), asc(projects.name));
@@ -94,39 +96,112 @@ async function loadSubprojects(db: DbOrTx, ctx: Context, version: VersionRow): P
   return rows.map((p, i) => ({ id: p.id, parentId: p.parentId, name: p.name, sort: layout[p.id] ?? 1_000_000 + i * 1024 }));
 }
 
-/** Loads a version, checks the user may see it and builds what the user gets to see. */
-async function payload(db: DbOrTx, user: SessionUser, ctx: Context, version: VersionRow): Promise<PlanPayload> {
-  const rootRights = rightsOf(ctx.rootLevel);
-  const internalOk = [...ctx.levels.values()].some((l) => rightsOf(l).viewInternal);
-  // Customers see a plan only once Slimstock shares it (stage 5 adds the switch).
-  if (!internalOk && !version.customerVisible) throw new ApiError(403, 'plan_not_shared');
+/** A version's data and its computed plan (always on the full data; filtering comes after). */
+export async function computeVersion(db: DbOrTx, ctx: Context, version: VersionRow) {
   const subprojects = await loadSubprojects(db, ctx, version);
-  const items = (await db.select().from(planItems).where(eq(planItems.versionId, version.id))).map(toItem);
+  const items = await allItems(db, version.id);
   const settings = planSettingsOf(ctx.root.settings);
-  const computed = computePlan(items, subprojects, ctx.rootId, settings, ctx.root.startDate);
+  return { items, subprojects, settings, plan: computePlan(items, subprojects, ctx.rootId, settings, ctx.root.startDate) };
+}
 
-  // What this user may see: everything of the root, or only the subprojects they are on; internal rows only for Slimstock.
-  const visibleSubs = rootRights.view ? subprojects : subprojects.filter((s) => ctx.levels.has(s.id));
-  const subIds = new Set(visibleSubs.map((s) => s.id));
-  const visible = items.filter((i) => {
-    if (i.internal && !internalOk) return false;
-    if (rootRights.view) return true;
-    const sub = computed.tree.subOf(i);
-    // Inside a visible subproject (or one of its children).
-    let s = sub;
-    while (s) {
-      if (subIds.has(s)) return true;
-      s = subprojects.find((x) => x.id === s)?.parentId ?? null;
-    }
-    return false;
-  });
-  const keys = new Set(visible.map((i) => i.key));
-  for (const i of visible) {
-    // Never reveal hidden rows through links or parents.
-    i.pm = { ...i.pm, deps: Object.fromEntries(Object.entries(i.pm.deps).filter(([k]) => keys.has(k))) };
+/** Whether the user sees internal content somewhere in this plan (Slimstock people). */
+const seesInternal = (ctx: Context) => [...ctx.levels.values()].some((l) => rightsOf(l).viewInternal);
+
+/** Customers only see versions Slimstock shared with them. */
+export function canSeeVersion(ctx: Context, version: VersionRow): boolean {
+  return seesInternal(ctx) || version.customerVisible;
+}
+
+export async function versionInfo(db: DbOrTx, version: VersionRow, end: string | null): Promise<PlanVersionInfo> {
+  const ids = [version.createdBy, version.acceptedBy].filter((x): x is string => !!x);
+  const names = ids.length
+    ? new Map((await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, ids))).map((u) => [u.id, u.name]))
+    : new Map();
+  let basedOn: PlanVersionInfo['basedOn'] = null;
+  if (version.basedOnVersionId) {
+    const [b] = await db
+      .select({ id: planVersions.id, no: planVersions.no })
+      .from(planVersions)
+      .where(eq(planVersions.id, version.basedOnVersionId));
+    basedOn = b ?? null;
   }
+  return {
+    id: version.id,
+    no: version.no,
+    kind: version.kind,
+    status: version.status,
+    name: version.name,
+    description: version.description,
+    createdAt: version.createdAt.toISOString(),
+    createdBy: version.createdBy ? (names.get(version.createdBy) ?? null) : null,
+    basedOn,
+    acceptedAt: version.acceptedAt?.toISOString() ?? null,
+    acceptedBy: version.acceptedBy ? (names.get(version.acceptedBy) ?? null) : null,
+    replacedAt: version.replacedAt?.toISOString() ?? null,
+    customerVisible: version.customerVisible,
+    end,
+  };
+}
+
+/** Which item keys and subprojects of a computed plan this user may see. */
+function visibility(ctx: Context, items: PlanItem[], subprojects: PlanSubproject[], tree: PlanTree) {
+  const rootView = rightsOf(ctx.rootLevel).view;
+  const internalOk = seesInternal(ctx);
+  const visibleSubs = rootView ? subprojects : subprojects.filter((s) => ctx.levels.has(s.id));
+  const subIds = new Set(visibleSubs.map((s) => s.id));
+  const keys = new Set(
+    items
+      .filter((i) => {
+        if (i.internal && !internalOk) return false;
+        if (rootView) return true;
+        // Inside a visible subproject (or one of its children).
+        let s = tree.subOf(i);
+        while (s) {
+          if (subIds.has(s)) return true;
+          s = subprojects.find((x) => x.id === s)?.parentId ?? null;
+        }
+        return false;
+      })
+      .map((i) => i.key),
+  );
   const rowIds = new Set([...keys, ...visibleSubs.map((s) => `sub:${s.id}`)]);
+  return { visibleSubs, keys, rowIds, rootView };
+}
+
+/** Loads a version, checks the user may see it and builds what the user gets to see. */
+export async function payload(db: DbOrTx, user: SessionUser, ctx: Context, version: VersionRow, compareId?: string): Promise<PlanPayload> {
+  const rootRights = rightsOf(ctx.rootLevel);
+  if (!canSeeVersion(ctx, version)) throw new ApiError(403, 'plan_not_shared');
+  const { items, subprojects, settings, plan: computed } = await computeVersion(db, ctx, version);
+  const { visibleSubs, keys, rowIds, rootView } = visibility(ctx, items, subprojects, computed.tree);
+  const visible = items
+    .filter((i) => keys.has(i.key))
+    // Never reveal hidden rows through links.
+    .map((i) => ({ ...i, pm: { ...i.pm, deps: Object.fromEntries(Object.entries(i.pm.deps).filter(([k]) => keys.has(k))) } }));
   const computedOut = Object.fromEntries([...computed.byRow].filter(([id]) => rowIds.has(id)));
+
+  let compare: PlanPayload['compare'] = null;
+  if (compareId && compareId !== version.id) {
+    const [other] = await db
+      .select()
+      .from(planVersions)
+      .where(and(eq(planVersions.id, compareId), eq(planVersions.projectId, ctx.rootId)));
+    if (!other || !canSeeVersion(ctx, other)) throw notFound();
+    const base = (await computeVersion(db, ctx, other)).plan;
+    const baseVis = visibility(ctx, [...base.tree.items.values()], [...base.tree.subs.values()], base.tree);
+    const diff = diffPlans(base, computed, settings.workDays);
+    diff.rows = diff.rows.filter((r) => (r.kind === 'removed' ? baseVis.keys.has(r.key) : keys.has(r.key)));
+    if (!rootView) diff.end = { from: null, to: null, shift: null };
+    compare = {
+      version: await versionInfo(db, other, base.total?.end ?? null),
+      computed: Object.fromEntries(
+        [...base.byRow]
+          .filter(([id]) => baseVis.rowIds.has(id))
+          .map(([id, r]) => [id, { start: r.start, end: r.end, milestone: r.milestone }]),
+      ),
+      diff,
+    };
+  }
 
   // People on the project (for the "who" column): members of the root and its subprojects.
   const tree = [ctx.rootId, ...subprojectIds(ctx.tree, ctx.rootId)];
@@ -138,19 +213,25 @@ async function payload(db: DbOrTx, user: SessionUser, ctx: Context, version: Ver
 
   return {
     project: { id: ctx.rootId, name: ctx.root.name, startDate: ctx.root.startDate },
-    version: { id: version.id, kind: version.kind, name: version.name, status: version.status },
+    version: await versionInfo(db, version, rootView ? (computed.total?.end ?? null) : null),
     settings,
     subprojects: visibleSubs,
     items: visible,
     computed: computedOut,
-    total: rootRights.view ? computed.total : null,
+    total: rootView ? computed.total : null,
     projectStart: computed.projectStart,
     people: people.sort((a, b) => a.name.localeCompare(b.name)),
-    rights: { edit: rootRights.editPlan && isEditable(version), editSettings: rootRights.editProject },
+    rights: {
+      edit: rootRights.editPlan && isEditable(version),
+      editSettings: rootRights.editProject,
+      createDraft: rootRights.editPlan,
+      manageVersions: rootRights.manageVersions,
+    },
+    compare,
   };
 }
 
-const isEditable = (v: VersionRow) => v.kind === 'working' || (v.kind === 'draft' && v.status === 'editing');
+export const isEditable = (v: VersionRow) => v.kind === 'working' || (v.kind === 'draft' && v.status === 'editing');
 
 /** For changes: the version, the root context, and the right to edit it. */
 async function forEdit(db: DbOrTx, user: SessionUser, versionId: string) {
@@ -162,7 +243,7 @@ async function forEdit(db: DbOrTx, user: SessionUser, versionId: string) {
   return { version, ctx };
 }
 
-async function allItems(db: DbOrTx, versionId: string): Promise<PlanItem[]> {
+export async function allItems(db: DbOrTx, versionId: string): Promise<PlanItem[]> {
   return (await db.select().from(planItems).where(eq(planItems.versionId, versionId))).map(toItem);
 }
 
@@ -184,8 +265,11 @@ function patchPm(pm: PlanPm, patch: Record<string, unknown>): PlanPm {
   return out as unknown as PlanPm;
 }
 
+/** Changes answer with the plan as the client shows it (with its comparison, if any). */
+const compareOf = (request: { query: unknown }) => (request.query as { compare?: string } | undefined)?.compare;
+
 export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
-  app.get<{ Params: { id: string }; Querystring: { version?: string } }>('/api/projects/:id/plan', async (request) => {
+  app.get<{ Params: { id: string }; Querystring: { version?: string; compare?: string } }>('/api/projects/:id/plan', async (request) => {
     const ctx = await context(db, request.user, request.params.id);
     let version: VersionRow | undefined;
     if (request.query.version) {
@@ -197,7 +281,7 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
     } else {
       version = await workingVersion(db, ctx.rootId, request.user.id);
     }
-    return payload(db, request.user, ctx, version);
+    return payload(db, request.user, ctx, version, request.query.compare);
   });
 
   app.patch<{ Params: { id: string } }>('/api/projects/:id/plan/settings', async (request) => {
@@ -230,7 +314,7 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
       pm: input.milestone ? { milestone: true, deps: {} } : { deps: {} },
       updatedBy: request.user.id,
     });
-    return reply.code(201).send({ key, plan: await payload(db, request.user, ctx, version) });
+    return reply.code(201).send({ key, plan: await payload(db, request.user, ctx, version, compareOf(request)) });
   });
 
   app.patch<{ Params: { vid: string; key: string } }>('/api/plan-versions/:vid/items/:key', async (request) => {
@@ -296,7 +380,7 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
         })
         .where(and(eq(planItems.versionId, version.id), eq(planItems.key, current.key)));
     });
-    return payload(db, request.user, ctx, version);
+    return payload(db, request.user, ctx, version, compareOf(request));
   });
 
   app.delete<{ Params: { vid: string; key: string } }>('/api/plan-versions/:vid/items/:key', async (request) => {
@@ -317,7 +401,7 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
           .where(and(eq(planItems.versionId, version.id), eq(planItems.key, i.key)));
       }
     });
-    return payload(db, request.user, ctx, version);
+    return payload(db, request.user, ctx, version, compareOf(request));
   });
 
   app.post<{ Params: { vid: string } }>('/api/plan-versions/:vid/move', async (request) => {
@@ -346,6 +430,6 @@ export async function planRoutes(app: FastifyInstance, { db }: { db: Db }) {
         version.layout = { ...version.layout, subprojects: layout };
       }
     });
-    return payload(db, request.user, ctx, version);
+    return payload(db, request.user, ctx, version, compareOf(request));
   });
 }

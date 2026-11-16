@@ -3,24 +3,24 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError, api, get } from '../api';
 
 /** Loads the plan and runs changes; every change answers with the whole plan. */
-export function usePlan(projectId: string) {
+export function usePlan(projectId: string, versionId: string | null, compareId: string | null) {
   const [plan, setPlan] = useState<PlanPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
-      setPlan(await get<PlanPayload>(`/api/projects/${projectId}/plan`));
+      setPlan(await get<PlanPayload>(`/api/projects/${projectId}/plan${query(versionId, compareId)}`));
       setError(null);
     } catch (e) {
       setError(e instanceof ApiError ? e.code : 'internal');
     }
-  }, [projectId]);
+  }, [projectId, versionId, compareId]);
 
   useEffect(() => {
-    setPlan(null);
     void reload();
   }, [reload]);
+  useEffect(() => setPlan(null), [projectId, versionId]);
 
   /** Runs a change. On a conflict (someone else was faster) the plan is reloaded and a notice shown. */
   const run = useCallback(
@@ -31,7 +31,8 @@ export function usePlan(projectId: string) {
       pick?: (r: T) => PlanPayload,
     ): Promise<T | null> => {
       try {
-        const res = await api<T>(method, url, body);
+        // Changes answer with the plan as shown here, including the comparison.
+        const res = await api<T>(method, compareId ? `${url}?compare=${compareId}` : url, body);
         setPlan(pick ? pick(res) : (res as unknown as PlanPayload));
         setNotice(null);
         return res;
@@ -42,11 +43,19 @@ export function usePlan(projectId: string) {
         return null;
       }
     },
-    [reload],
+    [reload, compareId],
   );
 
   const tree = useMemo(() => (plan ? new PlanTree(plan.items, plan.subprojects, plan.project.id) : null), [plan]);
   return { plan, tree, error, notice, setNotice, reload, run };
+}
+
+function query(version: string | null, compare: string | null): string {
+  const q = new URLSearchParams();
+  if (version) q.set('version', version);
+  if (compare) q.set('compare', compare);
+  const s = q.toString();
+  return s ? `?${s}` : '';
 }
 
 /** Rows without the ones inside collapsed rows (and, optionally, only one subproject's part). */

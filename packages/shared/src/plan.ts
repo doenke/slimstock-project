@@ -491,3 +491,112 @@ export function moveInTree(tree: PlanTree, target: PlanTarget, dir: MoveDirectio
 export function allowedDepTypes(tree: PlanTree, pred: string, succ: string): readonly DepType[] {
   return tree.isSummary(pred) || tree.isSummary(succ) ? ['FS'] : ['FS', 'SS', 'FF', 'SF'];
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Comparing two versions
+
+export type DiffField = 'title' | 'start' | 'end' | 'duration' | 'milestone' | 'deps' | 'assignees' | 'place' | 'internal' | 'deadline';
+
+export interface DiffRow {
+  key: string;
+  title: string;
+  kind: 'added' | 'removed' | 'changed';
+  fields: DiffField[];
+  /** Working days the start / end moved (positive = later); null when not comparable. */
+  startShift: number | null;
+  endShift: number | null;
+  from?: { start: string; end: string; title: string };
+  to?: { start: string; end: string; title: string };
+}
+
+export interface PlanDiff {
+  rows: DiffRow[];
+  /** Project end before and after, and the shift in working days. */
+  end: { from: string | null; to: string | null; shift: number | null };
+}
+
+/** Signed working days from one date to another (Monday → Tuesday = 1; across a weekend only workdays count). */
+export function workdayShift(from: string, to: string, workDays: number[]): number {
+  if (from === to) return 0;
+  const sign = to > from ? 1 : -1;
+  const [a, b] = sign > 0 ? [from, to] : [to, from];
+  let n = 0;
+  for (let t = Date.parse(`${a}T00:00:00Z`) + 86_400_000; t <= Date.parse(`${b}T00:00:00Z`); t += 86_400_000) {
+    if (workDays.includes(new Date(t).getUTCDay())) n++;
+  }
+  return sign * n;
+}
+
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+const sameDeps = (a: Record<string, PmDep>, b: Record<string, PmDep>) =>
+  sameSet(Object.keys(a), Object.keys(b)) && Object.entries(a).every(([k, d]) => b[k]!.type === d.type && b[k]!.lag === d.lag);
+
+/**
+ * What changed from `base` to `next` (both computed): tasks added, removed, moved in time or changed
+ * otherwise. Progress and actual dates are no planning changes and are left out.
+ */
+export function diffPlans(base: ComputedPlan, next: ComputedPlan, workDays: number[]): PlanDiff {
+  const rows: DiffRow[] = [];
+  const shift = (a?: string, b?: string) => (a && b ? workdayShift(a, b, workDays) : null);
+  for (const r of next.rows) {
+    if (r.kind !== 'item') continue;
+    const now = r.item;
+    const was = base.tree.items.get(now.key);
+    const c = next.byRow.get(now.key);
+    const b = base.byRow.get(now.key);
+    if (!was) {
+      rows.push({
+        key: now.key,
+        title: now.title,
+        kind: 'added',
+        fields: [],
+        startShift: null,
+        endShift: null,
+        to: c && { start: c.start, end: c.end, title: now.title },
+      });
+      continue;
+    }
+    const fields: DiffField[] = [];
+    if (was.title !== now.title) fields.push('title');
+    if (b && c && b.start !== c.start) fields.push('start');
+    if (b && c && b.end !== c.end) fields.push('end');
+    if (b && c && !b.milestone && !c.milestone && b.duration !== c.duration && !next.tree.isSummary(now.key)) fields.push('duration');
+    if (!!was.pm.milestone !== !!now.pm.milestone) fields.push('milestone');
+    if (!sameDeps(was.pm.deps, now.pm.deps)) fields.push('deps');
+    if (!sameSet(was.assignees, now.assignees)) fields.push('assignees');
+    if (was.parentKey !== now.parentKey || was.subprojectId !== now.subprojectId) fields.push('place');
+    if (was.internal !== now.internal) fields.push('internal');
+    if ((was.pm.deadline ?? null) !== (now.pm.deadline ?? null)) fields.push('deadline');
+    if (fields.length) {
+      rows.push({
+        key: now.key,
+        title: now.title,
+        kind: 'changed',
+        fields,
+        startShift: shift(b?.start, c?.start),
+        endShift: shift(b?.end, c?.end),
+        from: b && { start: b.start, end: b.end, title: was.title },
+        to: c && { start: c.start, end: c.end, title: now.title },
+      });
+    }
+  }
+  for (const r of base.rows) {
+    if (r.kind !== 'item' || next.tree.items.has(r.item.key)) continue;
+    const b = base.byRow.get(r.item.key);
+    rows.push({
+      key: r.item.key,
+      title: r.item.title,
+      kind: 'removed',
+      fields: [],
+      startShift: null,
+      endShift: null,
+      from: b && { start: b.start, end: b.end, title: r.item.title },
+    });
+  }
+  const from = base.total?.end ?? null;
+  const to = next.total?.end ?? null;
+  return { rows, end: { from, to, shift: from && to ? workdayShift(from, to, workDays) : null } };
+}
+
+/** Fields that describe what happened, not what is planned: they go along when a draft is accepted. */
+export const ACTUAL_FIELDS = ['progress', 'actualStart', 'actualEnd'] as const;

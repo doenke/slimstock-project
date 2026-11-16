@@ -40,7 +40,7 @@ describe('plan', () => {
     expect(plan.items).toEqual([]);
     expect(plan.subprojects.map((s) => s.name)).toEqual(['Schnittstellen']);
     expect(plan.projectStart).toBe('2026-11-16');
-    expect(plan.rights).toEqual({ edit: true, editSettings: true });
+    expect(plan.rights).toEqual({ edit: true, editSettings: true, createDraft: true, manageVersions: true });
     expect(plan.people.map((p) => p.name)).toEqual(['admin']);
   });
 
@@ -153,7 +153,7 @@ describe('plan permissions', () => {
     const team = await t.createUser('team');
     await t.call(t.admin.cookie, 'POST', `/api/projects/${rootId}/members`, { userId: team.id, roleIds: [t.role('ss_c')] });
     const teamPlan = await t.call(team.cookie, 'GET', `/api/projects/${rootId}/plan`);
-    expect(teamPlan.body.rights).toEqual({ edit: true, editSettings: false });
+    expect(teamPlan.body.rights).toEqual({ edit: true, editSettings: false, createDraft: true, manageVersions: false });
     expect(teamPlan.body.items).toHaveLength(2);
     expect((await t.call(team.cookie, 'PATCH', `/api/projects/${rootId}/plan/settings`, { level: true })).status).toBe(403);
 

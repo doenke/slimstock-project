@@ -1,4 +1,4 @@
-import type { Language, LocalizedText, PermissionLevel, PlanPm, ProjectStatus, Side } from '@spm/shared';
+import type { Language, LocalizedText, PermissionLevel, PlanItem, PlanPm, ProjectStatus, Side } from '@spm/shared';
 import { sql } from 'drizzle-orm';
 
 import { boolean, date, doublePrecision, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
@@ -119,7 +119,7 @@ export const memberRoles = pgTable(
 
 /**
  * Versions of a project's plan (one plan per top-level project). Exactly one is the working version;
- * drafts and history follow in stage 3.
+ * any number of drafts; former working versions become history.
  */
 export const planVersions = pgTable(
   'plan_versions',
@@ -128,11 +128,15 @@ export const planVersions = pgTable(
     projectId: uuid('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
+    /** Running number per project (V1, V2, …). */
+    no: integer('no').notNull().default(1),
     kind: text('kind').$type<'working' | 'draft' | 'history'>().notNull(),
     status: text('status').$type<'editing' | 'in_review' | 'accepted' | 'rejected' | 'discarded'>().notNull().default('editing'),
     name: text('name').notNull().default(''),
     description: text('description'),
     basedOnVersionId: uuid('based_on_version_id'),
+    /** The items of the version a draft was copied from, as they were then (to see later changes there). */
+    baseSnapshot: jsonb('base_snapshot').$type<PlanItem[]>(),
     customerVisible: boolean('customer_visible').notNull().default(false),
     /** Positions of the subprojects in the plan: { subprojects: { <id>: sort } }. */
     layout: jsonb('layout').$type<{ subprojects?: Record<string, number> }>().notNull().default({}),

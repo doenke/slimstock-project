@@ -1,7 +1,7 @@
 # Slimstock Projektmanagement – Hinweise für Claude
 
 Browser-App (PWA) zum Führen von Slimstock-Kundenprojekten, geteilt mit dem Kunden. Fachlicher Plan und
-alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–2 fertig.
+alle Entscheidungen: **PLAN.md** (bei Änderungen am Konzept mitpflegen). Aktueller Stand: Stufen 1–3 fertig.
 
 ## Aufbau
 
@@ -12,9 +12,11 @@ pnpm-Monorepo, TypeScript durchgehend.
   Sprachdateien `src/locales/*.json` (für Web und Server). Projektplan: `schedule.ts` (Netzplan-Rechnung,
   aus doenke/shopping portiert) und `plan.ts` (Baum aus Vorgängen, Phasen und Teilprojekten, Verknüpfungen
   von Phasen, Rollups, Einfügen/Verschieben). Der Server rechnet den Plan immer auf dem vollen Stand und
-  schickt Ergebnis + gefilterte Daten (`PlanPayload`); der Client rechnet nicht selbst.
+  schickt Ergebnis + gefilterte Daten (`PlanPayload`); der Client rechnet nicht selbst. Versionen:
+  Vorgänge behalten in jeder Version ihren `key`; Vergleich über `diffPlans`, beim Annehmen gehen die
+  `ACTUAL_FIELDS` (Fortschritt, Ist-Termine) aus der Arbeitsversion mit.
 - `apps/server` – Fastify 5, Drizzle + PostgreSQL. `src/app.ts` (Hooks, Healthcheck, statische Web-App),
-  `src/api/*` (auth, admin, projects, plan, access = Rechteberechnung), `src/auth/*` (Argon2id, Sessions,
+  `src/api/*` (auth, admin, projects, plan, versions = Entwürfe/Annehmen, access = Rechteberechnung), `src/auth/*` (Argon2id, Sessions,
   Login-Bremse), `src/db/schema.ts` + Migrationen in `drizzle/` (`pnpm db:generate`, nie von Hand ändern).
 - `apps/web` – React 19 + Vite, eigener Mini-Router (`router.tsx`), i18next, Plan unter `src/plan/*`, Service Worker `src/sw.ts`
   (Netz zuerst, API/Healthz nie gecacht), Styles in `src/styles.css` (Slimstock-Farben als Variablen).

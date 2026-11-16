@@ -621,3 +621,149 @@
 .gantt-legend {
   margin: 0.4rem 0 0;
 }
+
+/* Versions */
+.version-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.version-bar.kind-draft {
+  border-left-color: var(--orange);
+}
+.version-bar.kind-history {
+  border-left-color: var(--muted);
+}
+.version-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.version-select select {
+  font-weight: 600;
+  width: auto;
+  max-width: 24rem;
+}
+.version-compare {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.version-compare select {
+  width: auto;
+  max-width: 18rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+.version-meta {
+  margin: 0;
+}
+.version-desc {
+  color: var(--text);
+}
+.version-badge.status-working {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+}
+.version-badge.status-editing {
+  background: color-mix(in srgb, var(--orange) 16%, transparent);
+  color: color-mix(in srgb, var(--orange) 70%, var(--text));
+}
+.version-badge.status-in_review {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--primary);
+}
+.diff-panel {
+  padding: 0.7rem 1rem;
+}
+.diff-panel summary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.diff-panel .table-wrap {
+  margin-top: 0.6rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+.diff-summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+}
+.diff-table {
+  font-size: 0.88rem;
+}
+.diff-table td,
+.diff-table th {
+  padding: 0.35rem 0.6rem;
+}
+.diff-table tr.clickable {
+  cursor: pointer;
+}
+.diff-table tr.clickable:hover {
+  background: var(--row-hover);
+}
+.diff-table tr.removed td:first-child {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.later {
+  color: var(--danger);
+}
+.earlier {
+  color: var(--success);
+}
+.badge.diff-added {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+}
+.badge.diff-removed {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+.badge.diff-changed {
+  background: color-mix(in srgb, var(--orange) 16%, transparent);
+  color: color-mix(in srgb, var(--orange) 70%, var(--text));
+}
+.gantt__baseline {
+  position: absolute;
+  bottom: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+  z-index: 1;
+}
+.gantt__baseline--milestone {
+  width: 8px !important;
+  height: 8px;
+  margin-left: -4px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+.small-head {
+  font-size: 0.9rem;
+  margin: 0 0 0.3rem;
+}
+ul.plain {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.warn-box {
+  border: 1px solid color-mix(in srgb, var(--orange) 50%, transparent);
+  background: color-mix(in srgb, var(--orange) 8%, transparent);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+}
+.warn-box p {
+  margin: 0 0 0.3rem;
+}

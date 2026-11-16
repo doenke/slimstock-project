@@ -4,6 +4,8 @@ import {
   calendarDaysBetween,
   calendarOf,
   computePlan,
+  diffPlans,
+  workdayShift,
   DAY_MINUTES,
   DEFAULT_PLAN_SETTINGS,
   hasCycle,
@@ -214,5 +216,29 @@ describe('plan tree', () => {
   it('reads settings defensively', () => {
     expect(planSettingsOf({ workDays: [6, 0, 9], projectStart: 'x', level: 'yes' })).toEqual({ workDays: [0, 6], projectStart: null, level: false });
     expect(planSettingsOf(null)).toEqual(DEFAULT_PLAN_SETTINGS);
+  });
+});
+
+describe('comparing versions', () => {
+  it('counts working days between dates', () => {
+    expect(workdayShift('2026-11-20', '2026-11-23', [1, 2, 3, 4, 5])).toBe(1);
+    expect(workdayShift('2026-11-23', '2026-11-20', [1, 2, 3, 4, 5])).toBe(-1);
+    expect(workdayShift('2026-11-16', '2026-11-16', [1, 2, 3, 4, 5])).toBe(0);
+  });
+
+  it('finds added, removed and changed tasks; progress is no change', () => {
+    const base = [item('a', { pm: { dur: days(2), deps: {} } }), item('b', { pm: { dur: days(1), deps: { a: fs } } }), item('gone')];
+    const next = [
+      { ...base[0]!, pm: { dur: days(4), deps: {} }, progress: 50 },
+      { ...base[1]!, assignees: ['anna'] },
+      item('new', { pm: { milestone: true, deps: {} } }),
+    ];
+    const diff = diffPlans(computePlan(base, [], 'root', settings), computePlan(next, [], 'root', settings), [1, 2, 3, 4, 5]);
+    const by = Object.fromEntries(diff.rows.map((r) => [r.key, r]));
+    expect(by.a).toMatchObject({ kind: 'changed', fields: ['end', 'duration'], startShift: 0, endShift: 2 });
+    expect(by.b).toMatchObject({ kind: 'changed', fields: ['start', 'end', 'assignees'], startShift: 2 });
+    expect(by.new!.kind).toBe('added');
+    expect(by.gone!.kind).toBe('removed');
+    expect(diff.end).toEqual({ from: '2026-11-18', to: '2026-11-20', shift: 2 });
   });
 });

@@ -57,7 +57,9 @@
     "dependency_type": "Phasen lassen sich nur „nach Ende“ verknüpfen.",
     "unknown_item": "Diesen Vorgang gibt es nicht (mehr).",
     "unknown_subproject": "Dieses Teilprojekt gibt es nicht (mehr).",
-    "assignee_not_member": "Nur Beteiligte des Projekts können eingeplant werden."
+    "assignee_not_member": "Nur Beteiligte des Projekts können eingeplant werden.",
+    "status_not_allowed": "Das geht in diesem Zustand der Version nicht.",
+    "unknown_version": "Diese Version gibt es nicht."
   },
   "permission": {
     "reader": "Leser",
@@ -287,5 +289,88 @@
     "planStartHint": "Leer = Projektbeginn ({{date}}).",
     "levelLabel": "Ressourcenabgleich",
     "levelHint": "Jede Person erledigt ihre Vorgänge nacheinander; überschneiden sie sich, geht der mit dem wenigsten Puffer vor."
+  },
+  "versions": {
+    "workingName": "Ursprungsplan",
+    "unnamed": "Ohne Namen",
+    "version": "Version",
+    "group": {
+      "working": "Arbeitsversion",
+      "drafts": "Entwürfe",
+      "history": "Historie und verworfene Entwürfe"
+    },
+    "status": {
+      "editing": "Entwurf in Bearbeitung",
+      "in_review": "Zur Abstimmung",
+      "accepted": "Angenommen",
+      "rejected": "Abgelehnt",
+      "discarded": "Verworfen"
+    },
+    "kind": {
+      "working": "Arbeitsversion",
+      "draft": "Entwurf",
+      "history": "Frühere Arbeitsversion"
+    },
+    "compareWith": "Vergleichen mit",
+    "noCompare": "– kein Vergleich –",
+    "newDraft": "Neuer Entwurf",
+    "metaWorking": "Gültiger Plan seit {{date}}, angenommen von {{by}}",
+    "metaHistory": "Gültig vom {{from}} bis {{to}} – nur zum Ansehen",
+    "metaDraft": "Angelegt am {{date}} von {{by}} auf Basis von {{base}}",
+    "metaInitial": "Gültiger Plan – hier wird laufend gearbeitet",
+    "rename": "Name und Beschreibung",
+    "toReview": "Zur Abstimmung geben",
+    "toReviewHint": "Sperrt den Entwurf, damit niemand einem sich bewegenden Ziel zustimmt",
+    "backToEditing": "Zurückholen zur Bearbeitung",
+    "confirmDiscard": "Diesen Entwurf verwerfen? Er bleibt in der Liste und lässt sich wiederbeleben.",
+    "discard": "Verwerfen",
+    "revive": "Wiederbeleben",
+    "accept": "Annehmen …",
+    "newDraftFrom": "Neuer Entwurf aus {{version}}",
+    "newDraftIntro": "Der Entwurf ist eine Kopie, in der du frei planen kannst – die Arbeitsversion bleibt unberührt, bis du ihn annimmst.",
+    "name": "Name",
+    "namePlaceholder": "z. B. „Go-live zwei Wochen später“",
+    "description": "Was ändert sich und warum?",
+    "descriptionHint": "Hilft später beim Abstimmen und in der Historie.",
+    "acceptTitle": "{{version}} annehmen",
+    "acceptIntro": "Der Entwurf wird zur neuen Arbeitsversion. Die bisherige Arbeitsversion bleibt schreibgeschützt in der Historie.",
+    "acceptChanges": "Was sich gegenüber der Arbeitsversion ändert",
+    "carriedTitle": "Wird aus der Arbeitsversion übernommen (Ist-Daten)",
+    "carriedNone": "Nichts – Fortschritt und Ist-Termine sind gleich.",
+    "actual": {
+      "progress": "Fortschritt",
+      "actualStart": "Ist-Start",
+      "actualEnd": "Ist-Ende"
+    },
+    "lostTitle": "Änderungen in der Arbeitsversion, die nicht übernommen werden",
+    "lostIntro": "Diese Planänderungen wurden in der Arbeitsversion gemacht, nachdem der Entwurf entstanden ist. Sie fehlen im Entwurf und sind nach dem Annehmen nur noch in der Historie.",
+    "acceptConfirm": "Jetzt annehmen",
+    "lockedReview": "Dieser Entwurf liegt zur Abstimmung und ist gesperrt. Zum Ändern zurückholen.",
+    "lockedOld": "Diese Version ist nur zum Ansehen. Für Änderungen einen neuen Entwurf daraus anlegen.",
+    "baseline": "Im Vergleich"
+  },
+  "diff": {
+    "end": "Projektende {{from}} → {{to}} ({{shift}} Arbeitstage)",
+    "none": "Keine Planänderungen.",
+    "counts": "{{added}} neu · {{removed}} entfernt · {{changed}} geändert",
+    "title": "Änderungen gegenüber {{version}}",
+    "change": "Änderung",
+    "kind": {
+      "added": "neu",
+      "removed": "entfernt",
+      "changed": "geändert"
+    },
+    "field": {
+      "title": "Name",
+      "start": "Start",
+      "end": "Ende",
+      "duration": "Dauer",
+      "milestone": "Meilenstein",
+      "deps": "Vorgänger",
+      "assignees": "Wer",
+      "place": "Position",
+      "internal": "intern",
+      "deadline": "Deadline"
+    }
   }
 }

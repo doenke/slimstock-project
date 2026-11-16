@@ -10,6 +10,7 @@ import { adminRoutes } from './api/admin.js';
 import { authRoutes } from './api/auth.js';
 import { ApiError, errorHandler } from './api/errors.js';
 import { planRoutes } from './api/plan.js';
+import { versionRoutes } from './api/versions.js';
 import { projectRoutes } from './api/projects.js';
 import { SessionStore, type SessionUser } from './auth/sessions.js';
 import type { Config } from './config.js';
@@ -78,6 +79,7 @@ export async function buildApp({ config, db }: { config: Config; db: Db }) {
   await app.register(adminRoutes, { db, sessions });
   await app.register(projectRoutes, { db, config });
   await app.register(planRoutes, { db });
+  await app.register(versionRoutes, { db });
 
   app.all('/api/*', async () => {
     throw new ApiError(404, 'not_found');

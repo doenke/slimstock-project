@@ -1,4 +1,4 @@
-import type { PlanItem, PlanSettings, PlanSubproject, RowPlan } from './plan.js';
+import type { PlanDiff, PlanItem, PlanSettings, PlanSubproject, RowPlan } from './plan.js';
 import type { Language, LocalizedText } from './languages.js';
 import type { PermissionLevel, Rights, Side } from './permissions.js';
 import type { ProjectStatus } from './schemas.js';
@@ -95,7 +95,7 @@ export interface PlanPerson {
 /** The plan as the server sends it: data plus the computed dates (always computed on the full plan). */
 export interface PlanPayload {
   project: { id: string; name: string; startDate: string | null };
-  version: { id: string; kind: 'working' | 'draft' | 'history'; name: string; status: string };
+  version: PlanVersionInfo;
   settings: PlanSettings;
   subprojects: PlanSubproject[];
   items: PlanItem[];
@@ -104,5 +104,42 @@ export interface PlanPayload {
   total: RowPlan | null;
   projectStart: string;
   people: PlanPerson[];
-  rights: { edit: boolean; editSettings: boolean };
+  rights: { edit: boolean; editSettings: boolean; createDraft: boolean; manageVersions: boolean };
+  /** With ?compare=<version>: the other version's dates per row and what changed (from it to this one). */
+  compare: {
+    version: PlanVersionInfo;
+    computed: Record<string, { start: string; end: string; milestone: boolean }>;
+    diff: PlanDiff;
+  } | null;
+}
+
+export type VersionKind = 'working' | 'draft' | 'history';
+export type VersionStatus = 'editing' | 'in_review' | 'accepted' | 'rejected' | 'discarded';
+
+export interface PlanVersionInfo {
+  id: string;
+  no: number;
+  kind: VersionKind;
+  status: VersionStatus;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  basedOn: { id: string; no: number } | null;
+  acceptedAt: string | null;
+  acceptedBy: string | null;
+  replacedAt: string | null;
+  customerVisible: boolean;
+  /** Planned end of the version (null when empty). */
+  end: string | null;
+}
+
+/** What accepting a draft does to the working version. */
+export interface AcceptPreview {
+  /** Progress and actual dates taken over from the working version (per task). */
+  carried: { key: string; title: string; fields: string[] }[];
+  /** Planning changes made in the working version since the draft was started – they are not taken over. */
+  lost: PlanDiff['rows'];
+  /** What the draft changes compared to the current working version. */
+  diff: PlanDiff;
 }
